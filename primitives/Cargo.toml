@@ -1,0 +1,17 @@
+[package]
+name = "rococo-parachain-primitives"
+version = "0.1.0"
+authors = ["Banksy Technologies"]
+edition = "2021"
+
+[dependencies]
+# Substrate dependencies
+sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1" }
+sp-core = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1" }
+
+[features]
+default = [ "std" ]
+std = [
+	"sp-runtime/std",
+	"sp-core/std"
+]
