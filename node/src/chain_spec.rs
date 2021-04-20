@@ -6,6 +6,7 @@ use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
+use serde_json::json;
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec = sc_service::GenericChainSpec<parachain_runtime::GenesisConfig, Extensions>;
@@ -46,8 +47,8 @@ where
 
 pub fn get_chain_spec(id: ParaId) -> ChainSpec {
 	ChainSpec::from_genesis(
-		"Local Testnet",
-		"local_testnet",
+		"Banksy Local Testnet",
+		"banksy_local_testnet",
 		ChainType::Local,
 		move || {
 			testnet_genesis(
@@ -72,7 +73,61 @@ pub fn get_chain_spec(id: ParaId) -> ChainSpec {
 		vec![],
 		None,
 		None,
+		// Properties
+		Some(
+			json!({
+              "tokenDecimals": 18,
+              "tokenSymbol": "BKS"
+            })
+				.as_object()
+				.expect("Provided valid json map")
+				.clone(),
+		),
+		Extensions {
+			relay_chain: "westend-dev".into(),
+			para_id: id.into(),
+		},
+	)
+}
+
+pub fn dev_chain_spec(id: ParaId) -> ChainSpec {
+	ChainSpec::from_genesis(
+		"Banksy Development Testnet",
+		"banksy_development_testnet",
+		ChainType::Development,
+		move || {
+			testnet_genesis(
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				vec![
+					get_account_id_from_seed::<sr25519::Public>("Alice"),
+					get_account_id_from_seed::<sr25519::Public>("Bob"),
+					get_account_id_from_seed::<sr25519::Public>("Charlie"),
+					get_account_id_from_seed::<sr25519::Public>("Dave"),
+					get_account_id_from_seed::<sr25519::Public>("Eve"),
+					get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
+					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+				],
+				id,
+			)
+		},
+		vec![],
 		None,
+		None,
+		// Properties
+		Some(
+			json!({
+              "tokenDecimals": 18,
+              "tokenSymbol": "BKS"
+            })
+				.as_object()
+				.expect("Provided valid json map")
+				.clone(),
+		),
 		Extensions {
 			relay_chain: "westend-dev".into(),
 			para_id: id.into(),
@@ -82,8 +137,8 @@ pub fn get_chain_spec(id: ParaId) -> ChainSpec {
 
 pub fn staging_test_net(id: ParaId) -> ChainSpec {
 	ChainSpec::from_genesis(
-		"Staging Testnet",
-		"staging_testnet",
+		"Banksy Staging Testnet",
+		"banksy_staging_testnet",
 		ChainType::Live,
 		move || {
 			testnet_genesis(
@@ -97,7 +152,16 @@ pub fn staging_test_net(id: ParaId) -> ChainSpec {
 		Vec::new(),
 		None,
 		None,
-		None,
+		// Properties
+		Some(
+			json!({
+              "tokenDecimals": 18,
+              "tokenSymbol": "BKS"
+            })
+				.as_object()
+				.expect("Provided valid json map")
+				.clone(),
+		),
 		Extensions {
 			relay_chain: "westend-dev".into(),
 			para_id: id.into(),

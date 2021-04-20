@@ -1,6 +1,6 @@
 [package]
 authors = ["Banksy Technologies"]
-edition = "2021"
+edition = "2018"
 name = "parachain-info"
 version = "0.1.0"
 

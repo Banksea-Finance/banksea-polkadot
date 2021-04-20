@@ -2,7 +2,7 @@
 name = "rococo-parachain-primitives"
 version = "0.1.0"
 authors = ["Banksy Technologies"]
-edition = "2021"
+edition = "2018"
 
 [dependencies]
 # Substrate dependencies

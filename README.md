@@ -1,4 +1,4 @@
-# Shadows Network
+# Banksy Network
 
 ### Build the Banksy Node
 
