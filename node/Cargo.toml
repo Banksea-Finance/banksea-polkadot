@@ -23,7 +23,7 @@ hex-literal = "0.2.1"
 serde_json = "1.0.41"
 
 # Parachain dependencies
-parachain-runtime = { package = "mychian-runtime", path = "../runtime" }
+parachain-runtime = { package = "banksy-runtime", path = "../runtime" }
 rococo-parachain-primitives = { path = "../primitives" }
 
 # Substrate dependencies

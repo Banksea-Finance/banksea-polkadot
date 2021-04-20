@@ -1,5 +1,5 @@
 [package]
-name = 'mychian-runtime'
+name = 'banksy-runtime'
 version = '0.1.0'
 authors = ["Banksy Technologies"]
 edition = '2018'

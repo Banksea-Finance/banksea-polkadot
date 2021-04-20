@@ -432,6 +432,7 @@ name = "banksy-collator"
 version = "0.1.0"
 dependencies = [
  "assert_cmd",
+ "banksy-runtime",
  "cumulus-client-cli",
  "cumulus-client-collator",
  "cumulus-client-consensus-relay-chain",
@@ -444,7 +445,6 @@ dependencies = [
  "hex-literal 0.2.1",
  "jsonrpc-core",
  "log",
- "mychian-runtime",
  "nix",
  "pallet-sudo",
  "parity-scale-codec",
@@ -493,6 +493,44 @@ dependencies = [
  "tempfile",
  "tokio 0.2.24",
  "trie-root 0.15.2",
+]
+
+[[package]]
+name = "banksy-runtime"
+version = "0.1.0"
+dependencies = [
+ "cumulus-pallet-parachain-system",
+ "cumulus-pallet-xcm-handler",
+ "cumulus-primitives-core",
+ "cumulus-spambot",
+ "frame-executive",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "pallet-randomness-collective-flip",
+ "pallet-sudo",
+ "pallet-timestamp",
+ "pallet-transaction-payment",
+ "parachain-info",
+ "parity-scale-codec",
+ "polkadot-parachain",
+ "rococo-parachain-primitives",
+ "serde",
+ "sp-api",
+ "sp-block-builder",
+ "sp-core",
+ "sp-inherents",
+ "sp-io",
+ "sp-offchain",
+ "sp-runtime",
+ "sp-session",
+ "sp-std",
+ "sp-transaction-pool",
+ "sp-version",
+ "substrate-wasm-builder 3.0.0",
+ "xcm",
+ "xcm-builder",
+ "xcm-executor",
 ]
 
 [[package]]
@@ -4322,44 +4360,6 @@ dependencies = [
  "pin-project 1.0.4",
  "smallvec 1.6.1",
  "unsigned-varint 0.6.0",
-]
-
-[[package]]
-name = "mychian-runtime"
-version = "0.1.0"
-dependencies = [
- "cumulus-pallet-parachain-system",
- "cumulus-pallet-xcm-handler",
- "cumulus-primitives-core",
- "cumulus-spambot",
- "frame-executive",
- "frame-support",
- "frame-system",
- "pallet-balances",
- "pallet-randomness-collective-flip",
- "pallet-sudo",
- "pallet-timestamp",
- "pallet-transaction-payment",
- "parachain-info",
- "parity-scale-codec",
- "polkadot-parachain",
- "rococo-parachain-primitives",
- "serde",
- "sp-api",
- "sp-block-builder",
- "sp-core",
- "sp-inherents",
- "sp-io",
- "sp-offchain",
- "sp-runtime",
- "sp-session",
- "sp-std",
- "sp-transaction-pool",
- "sp-version",
- "substrate-wasm-builder 3.0.0",
- "xcm",
- "xcm-builder",
- "xcm-executor",
 ]
 
 [[package]]
