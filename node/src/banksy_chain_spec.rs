@@ -1,12 +1,15 @@
+//! Banksy chain configurations.
+
 use cumulus_primitives_core::ParaId;
 use hex_literal::hex;
-use rococo_parachain_primitives::{AccountId, Signature};
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
-use sp_core::{sr25519, Pair, Public};
-use sp_runtime::traits::{IdentifyAccount, Verify};
 use serde_json::json;
+use sp_core::{Pair, Public, sr25519};
+use sp_runtime::traits::{IdentifyAccount, Verify};
+
+use rococo_parachain_primitives::{AccountId, Signature};
 
 /// Specialized `ChainSpec` for the normal parachain runtime.
 pub type ChainSpec = sc_service::GenericChainSpec<parachain_runtime::GenesisConfig, Extensions>;
@@ -84,55 +87,48 @@ pub fn get_chain_spec(id: ParaId) -> ChainSpec {
 				.clone(),
 		),
 		Extensions {
-			relay_chain: "westend-dev".into(),
-			para_id: id.into(),
+			relay_chain: "rococo".into(),
+			para_id: 1024_u32.into(),
 		},
 	)
 }
 
 pub fn dev_chain_spec(id: ParaId) -> ChainSpec {
-	ChainSpec::from_genesis(
-		"Banksy Development Testnet",
-		"banksy_development_testnet",
-		ChainType::Development,
-		move || {
-			testnet_genesis(
-				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				vec![
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					get_account_id_from_seed::<sr25519::Public>("Bob"),
-					get_account_id_from_seed::<sr25519::Public>("Charlie"),
-					get_account_id_from_seed::<sr25519::Public>("Dave"),
-					get_account_id_from_seed::<sr25519::Public>("Eve"),
-					get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
-				],
-				id,
-			)
-		},
-		vec![],
-		None,
-		None,
-		// Properties
-		Some(
-			json!({
+    ChainSpec::from_genesis(
+        "Banksy Development Testnet",
+        "banksy_development_testnet",
+        ChainType::Development,
+        move || {
+            testnet_genesis(
+                get_account_id_from_seed::<sr25519::Public>("Alice"),
+                // Pre-funded accounts
+                vec![
+                    get_account_id_from_seed::<sr25519::Public>("Alice"),
+                    get_account_id_from_seed::<sr25519::Public>("Bob"),
+                    get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+                    get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+                ],
+                id,
+            )
+        },
+        vec![],
+        None,
+        None,
+        // Properties
+        Some(
+            json!({
               "tokenDecimals": 18,
               "tokenSymbol": "BKS"
             })
-				.as_object()
-				.expect("Provided valid json map")
-				.clone(),
-		),
+                .as_object()
+                .expect("Provided valid json map")
+                .clone(),
+        ),
 		Extensions {
-			relay_chain: "westend-dev".into(),
-			para_id: id.into(),
+			relay_chain: "rococo".into(),
+			para_id: 1024_u32.into(),
 		},
-	)
+    )
 }
 
 pub fn staging_test_net(id: ParaId) -> ChainSpec {
@@ -163,8 +159,8 @@ pub fn staging_test_net(id: ParaId) -> ChainSpec {
 				.clone(),
 		),
 		Extensions {
-			relay_chain: "westend-dev".into(),
-			para_id: id.into(),
+			relay_chain: "rococo".into(),
+			para_id: 1024_u32.into(),
 		},
 	)
 }

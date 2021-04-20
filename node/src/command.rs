@@ -1,5 +1,5 @@
 use crate::{
-	chain_spec,
+	banksy_chain_spec,
 	cli::{Cli, RelayChainCli, Subcommand},
 };
 use codec::Encode;
@@ -25,10 +25,10 @@ fn load_spec(
 	para_id: ParaId,
 ) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	match id {
-		"dev" => Ok(Box::new(chain_spec::dev_chain_spec(para_id))),
-		"staging" => Ok(Box::new(chain_spec::staging_test_net(para_id))),
-		"" => Ok(Box::new(chain_spec::get_chain_spec(para_id))),
-		path => Ok(Box::new(chain_spec::ChainSpec::from_json_file(
+		"dev" => Ok(Box::new(banksy_chain_spec::dev_chain_spec(para_id))),
+		"staging" => Ok(Box::new(banksy_chain_spec::staging_test_net(para_id))),
+		"" => Ok(Box::new(banksy_chain_spec::get_chain_spec(para_id))),
+		path => Ok(Box::new(banksy_chain_spec::ChainSpec::from_json_file(
 			path.into(),
 		)?)),
 	}
@@ -263,7 +263,7 @@ pub fn run() -> Result<()> {
 				let key = sp_core::Pair::generate().0;
 
 				let para_id =
-					chain_spec::Extensions::try_get(&*config.chain_spec).map(|e| e.para_id);
+					banksy_chain_spec::Extensions::try_get(&*config.chain_spec).map(|e| e.para_id);
 
 				let polkadot_cli = RelayChainCli::new(
 					&config,

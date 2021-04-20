@@ -1,4 +1,4 @@
-use crate::chain_spec;
+use crate::banksy_chain_spec;
 use sc_cli;
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -132,7 +132,7 @@ impl RelayChainCli {
 		para_config: &sc_service::Configuration,
 		relay_chain_args: impl Iterator<Item = &'a String>,
 	) -> Self {
-		let extension = chain_spec::Extensions::try_get(&*para_config.chain_spec);
+		let extension = banksy_chain_spec::Extensions::try_get(&*para_config.chain_spec);
 		let chain_id = extension.map(|e| e.relay_chain.clone());
 		let base_path = para_config
 			.base_path

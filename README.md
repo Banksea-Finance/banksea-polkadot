@@ -8,7 +8,6 @@ cargo build --release
 
 ## Run
 
-### Single Node Development Chain
 
 ### Single Node Development Chain
 
