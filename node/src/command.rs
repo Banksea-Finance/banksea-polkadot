@@ -25,9 +25,13 @@ fn load_spec(
 	para_id: ParaId,
 ) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	match id {
+		"banksy" => Ok(Box::new(banksy_chain_spec::banksy_testnet_config(para_id))),
 		"dev" => Ok(Box::new(banksy_chain_spec::dev_chain_spec(para_id))),
 		"staging" => Ok(Box::new(banksy_chain_spec::staging_test_net(para_id))),
-		"" => Ok(Box::new(banksy_chain_spec::get_chain_spec(para_id))),
+		"local" => Ok(Box::new(banksy_chain_spec::get_chain_spec(para_id))),
+		"" => Err(
+			"You have not specified what chain to sync.".into(),
+		),
 		path => Ok(Box::new(banksy_chain_spec::ChainSpec::from_json_file(
 			path.into(),
 		)?)),
