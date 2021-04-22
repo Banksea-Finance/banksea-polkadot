@@ -1,0 +1,27 @@
+version: "3"
+services:
+  rococo:
+    image: parity/rococo:rococo-v1
+    ports:
+      - 30331:30331 # TCP
+      - 19944:9944 # WS
+      - 19933:9933 # RPC
+    volumes:
+      - rococo1:/polkadot
+    restart: always
+    command: --port 30331 -d /polkadot --validator --chain rococo --name "prism-rococo-validator-1"
+
+  rococo2:
+    image: parity/rococo:rococo-v1
+    ports:
+      - 30332:30332 # TCP
+      - 29944:9944 # WS
+      - 29933:9933 # RPC
+    volumes:
+      - rococo2:/polkadot
+    restart: always
+    command: --port 30332 -d /polkadot --validator --chain rococo --name "prism-rococo-validator-2"
+
+volumes:
+  rococo1:
+  rococo2:
