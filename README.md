@@ -34,7 +34,14 @@ Start a dev chain:
 ./target/release/banksy-collator --dev --ws-external --rpc-external --rpc-cors=all
 ```
 
+### Rococo Chain
+```shell
+./target/release/banksy-collator --collator --tmp -- --chain rococo
+```
 
+```shell
+./target/release/banksy-collator --collator --tmp --parachain-id 2419 -- --execution wasm --chain ./rococo.json
+```
 
 
 
