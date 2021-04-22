@@ -184,12 +184,11 @@ pub fn banksy_testnet_config(id: ParaId) -> ChainSpec {
             )
         },
 		vec![
-			"/ip4/54.254.37.221/tcp/30333/p2p/12D3KooWNUPp9ervpypz95DCMHfb3CAbQdfrmmBbYehUaJsFvRvT"
-				.parse()
-				.unwrap(),
+			"/ip4/119.45.201.48/tcp/30331/p2p/12D3KooWBmhB3UcRyW377TZwyJ8BcDXjP9yT946YqL1Nr1tXhrce".parse().unwrap(),
+            "/ip4/119.45.201.48/tcp/30332/p2p/12D3KooWPotDCFfPGzBsvhBtJeEvFocktcpP1waKo78VVUPo6MgE".parse().unwrap(),
 		],
 		TelemetryEndpoints::new(vec![(TELEMETRY_URL.into(), 0)]).ok(),
-		Some("banksy-pc2"),
+		Some("banksy-pc1"),
         // Properties
         Some(
             json!({
