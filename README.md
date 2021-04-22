@@ -8,6 +8,17 @@ cargo build --release
 
 ## Run
 
+### Chain IDs
+
+| Network Description       | Chain ID |
+| ------------------------- | -------- |
+| Local Parachain TestNet   | 1024     |
+| Local Development TestNet | 1024     |
+| Banksy Rococo             | 1024     |
+
+
+
+ 
 
 ### Single Node Development Chain
 
@@ -23,7 +34,8 @@ Start a dev chain:
 ./target/release/banksy-collator --dev --ws-external --rpc-external --rpc-cors=all
 ```
 
- 
+
+
 
 
 
