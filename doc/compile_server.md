@@ -1,6 +1,7 @@
 # Compile Server Configuration
 
 use CentOS-7-x86_64-Minimal-2009.iso
+> http://mirrors.aliyun.com/centos/7/isos/x86_64/
 
 **CentOS Compile toolchain**
 ```shell
