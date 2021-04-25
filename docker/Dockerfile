@@ -31,4 +31,4 @@ RUN chmod uog+x /banksy-parachain/banksy-collator
 EXPOSE 30333 30334 9933 9944 9615
 
 VOLUME ["/data"]
-CMD ["/banksy-parachain/banksy-collator","--ws-external","--collator","-d","/data","--parachain-id","2419","--","--execution","wasm","--chain","/banksy-parachain/rococo.json"]
+CMD ["/banksy-parachain/banksy-collator","--ws-external","--collator","-d","/data","--rpc-external","--rpc-cors=all","--parachain-id","2419","--","--execution","wasm","--chain","/banksy-parachain/rococo.json"]
