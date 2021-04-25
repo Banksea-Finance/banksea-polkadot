@@ -13,6 +13,8 @@ RUN mv /usr/share/ca* /tmp && \
 	useradd -m -u 1000 -U -s /bin/sh -d /banksy-parachain banksy && \
 	mkdir -p /banksy-parachain/.local/share/banksy-parachain && \
 	chown -R banksy:banksy /banksy-parachain && \
+	mkdir -p /data && \
+	chown -R banksy:banksy /data && \
 	ln -s /banksy-parachain/.local/share/banksy-parachain /data && \
 	rm -rf /usr/bin /usr/sbin
 
@@ -29,4 +31,4 @@ RUN chmod uog+x /banksy-parachain/banksy-collator
 EXPOSE 30333 30334 9933 9944 9615
 
 VOLUME ["/data"]
-CMD ["/banksy-parachain/banksy-collator","--collator","--parachain-id","2419","--","--execution","wasm","--chain","/banksy-parachain/rococo.json"]
+CMD ["/banksy-parachain/banksy-collator","--ws-external","--collator","-d","/data","--parachain-id","2419","--","--execution","wasm","--chain","/banksy-parachain/rococo.json"]

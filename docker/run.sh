@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-docker run -d --name banksy --network host banksy/banksy:devnet
+docker run -d --name banksy --network host banksyfinance/banksy:devnet

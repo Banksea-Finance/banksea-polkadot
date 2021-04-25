@@ -40,7 +40,7 @@ Start a dev chain:
 ```
 
 ```shell
-./target/release/banksy-collator --collator --tmp --parachain-id 2419 -- --execution wasm --chain ./rococo.json
+./target/release/banksy-collator --ws-external --collator --tmp --parachain-id 2419 -- --execution wasm --chain ./resources/rococo.json
 ```
 
 
