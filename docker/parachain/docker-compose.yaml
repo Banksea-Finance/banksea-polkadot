@@ -1,0 +1,16 @@
+version: "3"
+services:
+  banksy:
+    image: banksyfinance/banksy:devnet
+    ports:
+      - 30333:30333 # parachain p2p
+      - 30334:30334 # relaychain p2p
+      - 9933:9933 # RPC call
+      - 9944:9944 # Websocket
+      - 9615:9615 # Prometheus
+    volumes:
+      - banksy:/data
+    restart: always
+
+volumes:
+  banksy:
