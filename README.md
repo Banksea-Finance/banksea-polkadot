@@ -43,6 +43,16 @@ Start a dev chain:
 ./target/release/banksy-collator --ws-external --collator --tmp --parachain-id 2419 -- --execution wasm --chain ./resources/rococo.json
 ```
 
+### Export genesis 
+
+```shell
+# Export genesis state
+./target/release/banksy-collator export-genesis-state --parachain-id 2419 > genesis-state
+
+# Export genesis wasm
+./target/release/banksy-collator export-genesis-wasm > genesis-wasm
+```
+
 
 
 
