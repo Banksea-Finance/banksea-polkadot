@@ -1,4 +1,4 @@
-# Banksy Network
+# Banksy Network - frontier
 
 ### Build the Banksy Node
 
