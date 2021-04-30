@@ -92,7 +92,7 @@ pub fn get_chain_spec(id: ParaId) -> ChainSpec {
         ),
         Extensions {
             relay_chain: "rococo".into(),
-            para_id: 1024_u32.into(),
+            para_id: 1618_u32.into(),
         },
     )
 }
@@ -130,7 +130,7 @@ pub fn dev_chain_spec(id: ParaId) -> ChainSpec {
         ),
         Extensions {
             relay_chain: "rococo".into(),
-            para_id: 1024_u32.into(),
+            para_id: 1618_u32.into(),
         },
     )
 }
@@ -164,7 +164,7 @@ pub fn staging_test_net(id: ParaId) -> ChainSpec {
         ),
         Extensions {
             relay_chain: "rococo".into(),
-            para_id: 1024_u32.into(),
+            para_id: 1618_u32.into(),
         },
     )
 }
@@ -201,7 +201,7 @@ pub fn banksy_testnet_config(id: ParaId) -> ChainSpec {
         ),
         Extensions {
             relay_chain: "rococo".into(),
-            para_id: 1024_u32.into(),
+            para_id: 1618_u32.into(),
         },
     )
 }

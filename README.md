@@ -10,11 +10,15 @@ cargo build --release
 
 ### Chain IDs
 
+Golden Ratio
+Phi
+φ = 1.618
+
 | Network Description       | Chain ID |
 | ------------------------- | -------- |
-| Local Parachain TestNet   | 1024     |
-| Local Development TestNet | 1024     |
-| Banksy Rococo             | 1024     |
+| Local Parachain TestNet   | 1616     |
+| Local Development TestNet | 1617     |
+| Banksy Rococo             | 1618     |
 
 
 
