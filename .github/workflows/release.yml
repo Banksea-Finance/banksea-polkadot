@@ -1,0 +1,69 @@
+name: Release
+
+# Using a single file workflow is the preferred solution for our CI over workflow_runs.
+# 1. It generates only 1 action item in the list making it more readable
+# 2. It includes the PR/Commit text in the action item
+# 3. Artifacts are not available between workflows.
+
+# This is only allowing pushes on the moonbeam repo for pull requests.
+####### DO NOT CHANGE THIS !! #######
+on: ["push"]
+
+jobs:
+  ####### Check files and formatting #######
+
+  check-copyright:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Find un-copyrighted files
+        run: |
+          find . -name '*.rs' -exec grep  -H -E -o -c Copyright {} \; | grep ':0' || true
+          FILECOUNT=$(find . -name '*.rs' -exec grep  -H -E -o -c  'Copyright'  {} \; | grep -c ':0' || true)
+          if [[ $FILECOUNT -eq 0 ]]; then
+            true
+          else
+            false
+          fi
+  check-links:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: "yes"
+
+  check-editorconfig:
+    name: "Check editorconfig"
+    runs-on: self-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Setup editorconfig checker
+        run: |
+          ls /tmp/bin/ec-linux-amd64 || \
+          cd /tmp && \
+          wget https://github.com/editorconfig-checker/editorconfig-checker/releases/download/2.1.0/ec-linux-amd64.tar.gz && \
+          tar xvf ec-linux-amd64.tar.gz && \
+          chmod +x bin/ec-linux-amd64
+      - name: Check files
+        run: /tmp/bin/ec-linux-amd64
+
+  check-prettier:
+    name: "Check with Prettier"
+    runs-on: self-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Use Node.js 14.x
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14.x
+      - name: Check with Prettier
+        run: npx prettier --check --ignore-path .gitignore '**/*.(yml|js|ts|json)'
+
+
+  ####### Building and Testing binaries #######
+  
