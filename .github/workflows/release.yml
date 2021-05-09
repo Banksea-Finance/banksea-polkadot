@@ -61,3 +61,70 @@ jobs:
 
   ####### Building and Testing binaries #######
 
+  build:
+    runs-on: ubuntu-latest
+    env:
+      CARGO_SCCACHE_VERSION: 0.2.14-alpha.0-parity
+      # DEBUG: "test*"
+    outputs:
+      RUSTC: ${{ steps.get-rust-versions.outputs.rustc }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        # Install sccache
+      - uses: actions/cache@v2
+        with:
+          path: ${{ runner.tool_cache }}/cargo-sccache
+          key: ${{ runner.OS }}-sccache-bin-${{ env.CARGO_SCCACHE_VERSION }}-v1
+
+      # With rustup's nice new toml format, we just need to run rustup show to install the toolchain
+      # https://github.com/actions-rs/toolchain/issues/126#issuecomment-782989659
+      - name: Setup Rust toolchain
+        run: rustup show
+
+      - name: Install sccache
+        run: |
+          if [ ! -f ${{ runner.tool_cache }}/cargo-sccache/bin/sccache ]; then
+            cargo install sccache --git https://github.com/paritytech/sccache.git --no-default-features --features=dist-client --root ${{ runner.tool_cache }}/cargo-sccache
+          fi
+        shell: bash
+      - name: Start sccache
+        run: |
+          chmod +x ${{ runner.tool_cache }}/cargo-sccache/bin/sccache
+          ${{ runner.tool_cache }}/cargo-sccache/bin/sccache --start-server
+          ${{ runner.tool_cache }}/cargo-sccache/bin/sccache -s
+          echo "RUSTC_WRAPPER=${{ runner.tool_cache }}/cargo-sccache/bin/sccache" >> $GITHUB_ENV
+      - id: get-rust-versions
+        run: |
+          echo "::set-output name=rustc::$(rustc --version)"
+      - name: Build Node
+        run: RUSTFLAGS="-C opt-level=3" cargo build --release --verbose --all
+      # We determine whether there are unmodified Cargo.lock files by:
+      # 1. Asking git for a list of all modified files
+      # 2. Using grep to reduce the list to only Cargo.lock files
+      # 3. Counting the number of lines of output
+      - name: Check Cargo Toml
+        run: |
+          FILECOUNT=$(git diff-index --name-only HEAD | grep Cargo.lock | wc -l)
+          if [[ $FILECOUNT -eq 0 ]]; then
+            echo "All lock files are valid"
+          else
+            echo "The following Cargo.lock files have uncommitted changes"
+            git diff-index --name-only HEAD | grep Cargo.lock
+            false
+          fi
+      - name: Unit tests
+        run: cargo test --release --verbose --all
+      - name: Save parachain binary
+        run: |
+          mkdir -p build
+          cp target/release/banksy-collector build/banksy-collector;
+      - name: Upload binary
+        uses: actions/upload-artifact@v2
+        with:
+          name: banksy
+          path: build
+      - name: Check with Clippy
+        run: cargo clippy --release --workspace
+      - name: Format code with rustfmt
+        run: cargo fmt -- --check
