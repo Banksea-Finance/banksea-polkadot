@@ -32,8 +32,6 @@ pallet-randomness-collective-flip = { git = "https://github.com/paritytech/subst
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1" }
 pallet-sudo = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1" }
 pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1" }
-pallet-frontier = { path = "../pallets/frontier",default-features = false, version = '0.0.1' }
-pallet-contracts = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1" }
 
 # Cumulus dependencies
 cumulus-pallet-parachain-system = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "rococo-v1" }
@@ -49,6 +47,7 @@ xcm = { git = "https://github.com/paritytech/polkadot", default-features = false
 xcm-builder = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "rococo-v1" }
 xcm-executor = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "rococo-v1" }
 pallet-xcm = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "rococo-v1" }
+pallet-evm = { git = "https://github.com/ShadowsNetwork/prism.git", default-features = false, branch = "main" }
 
 [build-dependencies]
 substrate-wasm-builder = "3.0.0"
@@ -79,8 +78,6 @@ std = [
 	"pallet-sudo/std",
 	"pallet-transaction-payment/std",
 	"parachain-info/std",
-        "pallet-frontier/std",
-        "pallet-contracts/std",
 	"rococo-parachain-primitives/std",
 	"cumulus-pallet-parachain-system/std",
 	"cumulus-pallet-xcmp-queue/std",
@@ -91,4 +88,5 @@ std = [
 	"xcm/std",
 	"xcm-builder/std",
 	"xcm-executor/std",
+	"pallet-evm/std",
 ]

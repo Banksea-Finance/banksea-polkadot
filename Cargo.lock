@@ -535,8 +535,6 @@ dependencies = [
  "frame-system",
  "log",
  "pallet-balances",
- "pallet-contracts",
- "pallet-frontier",
  "pallet-randomness-collective-flip",
  "pallet-sudo",
  "pallet-timestamp",
@@ -4785,51 +4783,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-contracts"
-version = "3.0.0"
-source = "git+https://github.com/paritytech/substrate?branch=rococo-v1#2be8fcc4236d32786c62f6f27a98e7fe7e550807"
-dependencies = [
- "frame-support",
- "frame-system",
- "log",
- "pallet-contracts-primitives",
- "pallet-contracts-proc-macro",
- "parity-scale-codec",
- "parity-wasm 0.42.2",
- "pwasm-utils 0.17.1",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-sandbox",
- "sp-std",
- "wasmi-validation 0.4.0",
-]
-
-[[package]]
-name = "pallet-contracts-primitives"
-version = "3.0.0"
-source = "git+https://github.com/paritytech/substrate?branch=rococo-v1#2be8fcc4236d32786c62f6f27a98e7fe7e550807"
-dependencies = [
- "bitflags",
- "parity-scale-codec",
- "serde",
- "sp-core",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-contracts-proc-macro"
-version = "3.0.0"
-source = "git+https://github.com/paritytech/substrate?branch=rococo-v1#2be8fcc4236d32786c62f6f27a98e7fe7e550807"
-dependencies = [
- "proc-macro2 1.0.26",
- "quote 1.0.9",
- "syn 1.0.70",
-]
-
-[[package]]
 name = "pallet-democracy"
 version = "3.0.0"
 source = "git+https://github.com/paritytech/substrate?branch=rococo-v1#2be8fcc4236d32786c62f6f27a98e7fe7e550807"
@@ -4876,15 +4829,6 @@ dependencies = [
  "sp-npos-elections",
  "sp-runtime",
  "sp-std",
-]
-
-[[package]]
-name = "pallet-frontier"
-version = "0.0.1"
-dependencies = [
- "frame-support",
- "frame-system",
- "parity-scale-codec",
 ]
 
 [[package]]
@@ -5469,12 +5413,6 @@ name = "parity-wasm"
 version = "0.41.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ddfc878dac00da22f8f61e7af3157988424567ab01d9920b962ef7dcbd7cd865"
-
-[[package]]
-name = "parity-wasm"
-version = "0.42.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "be5e13c266502aadf83426d87d81a0f5d1ef45b8027f5a471c360abfe4bfae92"
 
 [[package]]
 name = "parity-ws"
@@ -7030,17 +6968,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pwasm-utils"
-version = "0.17.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "78778a25194f953d1766fc8c6a331ed56f070d09a0511267ee2c150cb71ea8c2"
-dependencies = [
- "byteorder",
- "log",
- "parity-wasm 0.42.2",
-]
-
-[[package]]
 name = "quick-error"
 version = "1.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8118,7 +8045,7 @@ dependencies = [
  "derive_more 0.99.13",
  "parity-scale-codec",
  "parity-wasm 0.41.0",
- "pwasm-utils 0.14.0",
+ "pwasm-utils",
  "sp-allocator",
  "sp-core",
  "sp-serializer",
@@ -8150,7 +8077,7 @@ dependencies = [
  "log",
  "parity-scale-codec",
  "parity-wasm 0.41.0",
- "pwasm-utils 0.14.0",
+ "pwasm-utils",
  "sc-executor-common",
  "scoped-tls",
  "sp-allocator",
@@ -9575,19 +9502,6 @@ dependencies = [
  "proc-macro2 1.0.26",
  "quote 1.0.9",
  "syn 1.0.70",
-]
-
-[[package]]
-name = "sp-sandbox"
-version = "0.9.0"
-source = "git+https://github.com/paritytech/substrate?branch=rococo-v1#2be8fcc4236d32786c62f6f27a98e7fe7e550807"
-dependencies = [
- "parity-scale-codec",
- "sp-core",
- "sp-io",
- "sp-std",
- "sp-wasm-interface",
- "wasmi",
 ]
 
 [[package]]
@@ -11116,7 +11030,7 @@ dependencies = [
  "num-rational 0.2.4",
  "num-traits",
  "parity-wasm 0.41.0",
- "wasmi-validation 0.3.0",
+ "wasmi-validation",
 ]
 
 [[package]]
@@ -11126,15 +11040,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ea78c597064ba73596099281e2f4cfc019075122a65cdda3205af94f0b264d93"
 dependencies = [
  "parity-wasm 0.41.0",
-]
-
-[[package]]
-name = "wasmi-validation"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2eb8e860796d8be48efef530b60eebf84e74a88bce107374fffb0da97d504b8"
-dependencies = [
- "parity-wasm 0.42.2",
 ]
 
 [[package]]

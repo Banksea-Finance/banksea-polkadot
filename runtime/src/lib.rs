@@ -30,6 +30,9 @@ pub use frame_support::{
 	},
 	StorageValue,
 };
+pub use pallet_evm::{
+	HashedAddressMapping, EnsureAddressTruncated,
+}
 use frame_system::limits::{BlockLength, BlockWeights};
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_timestamp::Call as TimestampCall;
@@ -76,9 +79,6 @@ pub const EPOCH_DURATION_IN_BLOCKS: u32 = 10 * MINUTES;
 pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
-
-//for contracts
-pub const MILLICENTS: Balance = 1_000_000_000;
 
 // 1 in 4 blocks (on average, not counting collisions) will be primary babe blocks.
 pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
@@ -184,25 +184,6 @@ impl pallet_timestamp::Config for Runtime {
 	type WeightInfo = ();
 }
 
-impl pallet_contracts::Config for Runtime {
-    type Time = Timestamp;
-    type Randomness = RandomnessCollectiveFlip;
-    type Currency = Balances;
-    type Event = Event;
-    type DetermineContractAddress = pallet_contracts::SimpleAddressDeterminer<Runtime>;
-    type TrieIdGenerator = pallet_contracts::TrieIdFromParentCounter<Runtime>;
-    type RentPayment = ();
-    type SignedClaimHandicap = pallet_contracts::DefaultSignedClaimHandicap;
-    type TombstoneDeposit = TombstoneDeposit;
-    type StorageSizeOffset = pallet_contracts::DefaultStorageSizeOffset;
-    type RentByteFee = RentByteFee;
-    type RentDepositOffset = RentDepositOffset;
-    type SurchargeReward = SurchargeReward;
-    type MaxDepth = pallet_contracts::DefaultMaxDepth;
-    type MaxValueSize = pallet_contracts::DefaultMaxValueSize;
-    type WeightPrice = pallet_transaction_payment::Module<Self>;
-}
-
 parameter_types! {
 	pub const ExistentialDeposit: u128 = 500;
 	pub const TransferFee: u128 = 0;
@@ -235,8 +216,48 @@ impl pallet_sudo::Config for Runtime {
 	type Event = Event;
 }
 
-impl pallet_frontier::Trait for Runtime {
+parameter_types! {
+	pub const EVMChainId:u64 = 888;
+}
+
+impl pallet_evm::Config for Runtime {
+	/// Calculator for current gas price.
+	type FeeCalculator = FixedGasPrice;
+
+	/// Maps Ethereum gas to Substrate weight.
+	type GasWeightMapping = ();
+
+	/// Allow the origin to call on behalf of given address.
+	type CallOrigin = EnsureAddressTruncated;
+	/// Allow the origin to withdraw on behalf of given address.
+	type WithdrawOrigin = EnsureAddressTruncated;
+
+	/// Mapping from address to account id.
+	type AddressMapping = HashedAddressMapping<BlakeTwo256>;
+	/// Currency type for withdraw and balance storage.
+	type Currency = Balance;
+
+	/// The overarching event type.
 	type Event = Event;
+	/// Precompiles associated with this EVM engine.
+	type Precompiles = {
+		pallet_evm_precompile_simple::ECRecover,
+		pallet_evm_precompile_simple::Sha256,
+		pallet_evm_precompile_simple::Ripemd160,
+		pallet_evm_precompile_simple::Identity,
+		pallet_evm_precompile_simple::ECRecoverPublicKey,
+		pallet_evm_precompile_sha3fips::Sha3FIPS256,
+		pallet_evm_precompile_sha3fips::Sha3FIPS512,
+	};
+	/// Chain ID of EVM.
+	type ChainId = EVMChainId;
+	/// EVM execution runner.
+	type Runner = pallet_evm::runner::stack::Runner<Self>;
+
+	/// To handle fee deduction for EVM transactions. An example is this pallet being used by `pallet_ethereum`
+	/// where the chain implementing `pallet_ethereum` should be able to configure what happens to the fees
+	/// Similar to `OnChargeTransaction` of `pallet_transaction_payment`
+	type OnChargeTransaction = ();
 }
 
 parameter_types! {
@@ -396,12 +417,11 @@ construct_runtime! {
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>},
+		EVM: pallet_evm::{Pallet, Call, Storage, Config, Event<T>},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Call, Storage},
 		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>},
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
 		ParachainInfo: parachain_info::{Pallet, Storage, Config},
-        Frontier: pallet_frontier::{Module, Call, Storage, Event<T>},
-        Contracts: pallet_contracts::{Module, Call, Config, Storage, Event<T>},
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>},
