@@ -8,7 +8,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use rococo_parachain_primitives::*;
 use sp_api::impl_runtime_apis;
-use sp_core::OpaqueMetadata;
+use sp_core::{OpaqueMetadata, U256};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{BlakeTwo256, Block as BlockT, IdentityLookup},
@@ -31,8 +31,9 @@ pub use frame_support::{
 	StorageValue,
 };
 pub use pallet_evm::{
-	HashedAddressMapping, EnsureAddressTruncated,
-}
+	HashedAddressMapping, EnsureAddressTruncated, FeeCalculator, EnsureAddressRoot, EnsureAddressNever,
+	IdentityAddressMapping,
+};
 use frame_system::limits::{BlockLength, BlockWeights};
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_timestamp::Call as TimestampCall;
@@ -216,8 +217,19 @@ impl pallet_sudo::Config for Runtime {
 	type Event = Event;
 }
 
+/// Fixed gas price of `1`.
+pub struct FixedGasPrice;
+
+impl FeeCalculator for FixedGasPrice {
+	fn min_gas_price() -> U256 {
+		// Gas price is always one token per gas.
+		1.into()
+	}
+}
+
 parameter_types! {
 	pub const EVMChainId:u64 = 888;
+	pub const EVMBlockGasLimt:U256 = 1_000.into();
 }
 
 impl pallet_evm::Config for Runtime {
@@ -228,29 +240,23 @@ impl pallet_evm::Config for Runtime {
 	type GasWeightMapping = ();
 
 	/// Allow the origin to call on behalf of given address.
-	type CallOrigin = EnsureAddressTruncated;
+	type CallOrigin = EnsureAddressRoot<AccountId>;
 	/// Allow the origin to withdraw on behalf of given address.
-	type WithdrawOrigin = EnsureAddressTruncated;
+	type WithdrawOrigin = EnsureAddressNever<AccountId>;
 
 	/// Mapping from address to account id.
-	type AddressMapping = HashedAddressMapping<BlakeTwo256>;
+	type AddressMapping = IdentityAddressMapping;
 	/// Currency type for withdraw and balance storage.
-	type Currency = Balance;
+	type Currency = Balances;
 
 	/// The overarching event type.
 	type Event = Event;
 	/// Precompiles associated with this EVM engine.
-	type Precompiles = {
-		pallet_evm_precompile_simple::ECRecover,
-		pallet_evm_precompile_simple::Sha256,
-		pallet_evm_precompile_simple::Ripemd160,
-		pallet_evm_precompile_simple::Identity,
-		pallet_evm_precompile_simple::ECRecoverPublicKey,
-		pallet_evm_precompile_sha3fips::Sha3FIPS256,
-		pallet_evm_precompile_sha3fips::Sha3FIPS512,
-	};
+	type Precompiles = ();
 	/// Chain ID of EVM.
 	type ChainId = EVMChainId;
+	/// The block gas limit. Can be a simple constant, or an adjustment algorithm in another pallet.
+	type BlockGasLimit = EVMBlockGasLimt;
 	/// EVM execution runner.
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
 

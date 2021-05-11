@@ -8,6 +8,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sp_core::{Pair, Public, sr25519};
 use sp_runtime::traits::{IdentifyAccount, Verify};
+use banksy_runtime::{EVMConfig};
+use std::collections::BTreeMap;
 
 use rococo_parachain_primitives::{AccountId, Signature};
 use sc_telemetry::TelemetryEndpoints;
@@ -227,5 +229,8 @@ fn testnet_genesis(
         },
         pallet_sudo: parachain_runtime::SudoConfig { key: root_key },
         parachain_info: parachain_runtime::ParachainInfoConfig { parachain_id: id },
+        pallet_evm: EVMConfig {
+			accounts: BTreeMap::new(),
+		},
     }
 }
