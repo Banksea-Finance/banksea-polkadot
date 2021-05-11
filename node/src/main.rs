@@ -6,6 +6,7 @@
 mod banksy_chain_spec;
 #[macro_use]
 mod service;
+mod service_dev;
 mod cli;
 mod command;
 

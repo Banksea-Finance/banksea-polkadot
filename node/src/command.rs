@@ -261,9 +261,17 @@ pub fn run() -> Result<()> {
 			runner.run_node_until_exit(|config| async move {
 				// TODO
 				let key = sp_core::Pair::generate().0;
+				let extension = chain_spec::Extensions::try_get(&*config.chain_spec);
+				let relay_chain_id = extension.map(|e| e.relay_chain.clone());
+				let without_relay_chain = cli.run.relay_chain || relay_chain_id == Some("none".to_string());
+				let para_id = extension.map(|e| e.para_id);
 
-				let para_id =
-					banksy_chain_spec::Extensions::try_get(&*config.chain_spec).map(|e| e.para_id);
+				if without_relay_chain {
+					// --dev implies --collator
+					let collator = collator || cli.run.shared_params.dev;
+
+					return crate::service_dev::new_dev(config, collator, cli.run);
+				}
 
 				let polkadot_cli = RelayChainCli::new(
 					&config,

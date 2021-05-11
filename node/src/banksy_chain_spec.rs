@@ -129,7 +129,7 @@ pub fn dev_chain_spec(id: ParaId) -> ChainSpec {
                 .clone(),
         ),
         Extensions {
-            relay_chain: "rococo".into(),
+            relay_chain: "none".into(),
             para_id: 1618_u32.into(),
         },
     )

@@ -77,9 +77,13 @@ pub struct RunCmd {
 	#[structopt(flatten)]
 	pub base: sc_cli::RunCmd,
 
-	/// Id of the parachain this collator collates for.
-	#[structopt(long)]
-	pub parachain_id: Option<u32>,
+    /// Enable the development service to run without a backing relay chain
+    #[structopt(long)]
+    pub relay_chain: bool,
+
+    /// Id of the parachain this collator collates for.
+    #[structopt(long)]
+    pub parachain_id: Option<u32>,
 }
 
 impl std::ops::Deref for RunCmd {
