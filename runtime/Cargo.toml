@@ -33,6 +33,10 @@ pallet-timestamp = { git = "https://github.com/paritytech/substrate", default-fe
 pallet-sudo = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1" }
 pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1" }
 
+pallet-evm = { git = "https://github.com/purestake/frontier", default-features = false, branch = "rococo-v1" }
+pallet-utility = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "rococo-v1" }
+pallet-ethereum = { git = "https://github.com/purestake/frontier", default-features = false, branch = "rococo-v1" }
+
 # Cumulus dependencies
 cumulus-pallet-parachain-system = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "rococo-v1" }
 cumulus-primitives-core = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "rococo-v1" }
@@ -47,7 +51,6 @@ xcm = { git = "https://github.com/paritytech/polkadot", default-features = false
 xcm-builder = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "rococo-v1" }
 xcm-executor = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "rococo-v1" }
 pallet-xcm = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "rococo-v1" }
-pallet-evm = { git = "https://github.com/ShadowsNetwork/prism.git", default-features = false, branch = "main" }
 
 [build-dependencies]
 substrate-wasm-builder = "3.0.0"
@@ -89,4 +92,5 @@ std = [
 	"xcm-builder/std",
 	"xcm-executor/std",
 	"pallet-evm/std",
+	"pallet-ethereum/std",
 ]

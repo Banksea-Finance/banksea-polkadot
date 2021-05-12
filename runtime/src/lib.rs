@@ -34,6 +34,9 @@ pub use pallet_evm::{
 	HashedAddressMapping, EnsureAddressTruncated, FeeCalculator, EnsureAddressRoot, EnsureAddressNever,
 	IdentityAddressMapping,
 };
+pub use pallet_ethereum::{
+	Transaction as EthereumTransaction, IntermediateStateRoot,
+};
 use frame_system::limits::{BlockLength, BlockWeights};
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_timestamp::Call as TimestampCall;
@@ -229,7 +232,6 @@ impl FeeCalculator for FixedGasPrice {
 
 parameter_types! {
 	pub const EVMChainId:u64 = 888;
-	pub const EVMBlockGasLimt:U256 = 1_000.into();
 }
 
 impl pallet_evm::Config for Runtime {
@@ -245,7 +247,7 @@ impl pallet_evm::Config for Runtime {
 	type WithdrawOrigin = EnsureAddressNever<AccountId>;
 
 	/// Mapping from address to account id.
-	type AddressMapping = IdentityAddressMapping;
+	type AddressMapping = HashedAddressMapping<BlakeTwo256>;
 	/// Currency type for withdraw and balance storage.
 	type Currency = Balances;
 
@@ -256,7 +258,7 @@ impl pallet_evm::Config for Runtime {
 	/// Chain ID of EVM.
 	type ChainId = EVMChainId;
 	/// The block gas limit. Can be a simple constant, or an adjustment algorithm in another pallet.
-	type BlockGasLimit = EVMBlockGasLimt;
+	type BlockGasLimit = ();
 	/// EVM execution runner.
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
 
@@ -264,6 +266,14 @@ impl pallet_evm::Config for Runtime {
 	/// where the chain implementing `pallet_ethereum` should be able to configure what happens to the fees
 	/// Similar to `OnChargeTransaction` of `pallet_transaction_payment`
 	type OnChargeTransaction = ();
+}
+
+impl pallet_ethereum::Config for Runtime {
+	type Event = Event;
+	/// Find author for Ethereum.
+	type FindAuthor = ();
+	/// How Ethereum state root is calculated.
+	type StateRoot = pallet_ethereum::IntermediateStateRoot;
 }
 
 parameter_types! {
@@ -424,6 +434,7 @@ construct_runtime! {
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Sudo: pallet_sudo::{Pallet, Call, Storage, Config<T>, Event<T>},
 		EVM: pallet_evm::{Pallet, Call, Storage, Config, Event<T>},
+		Ethereum: pallet_ethereum::{Pallet, Call, Storage, Event, Config, ValidateUnsigned},
 		RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Call, Storage},
 		ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Storage, Inherent, Event<T>},
 		TransactionPayment: pallet_transaction_payment::{Pallet, Storage},
