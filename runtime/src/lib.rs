@@ -37,6 +37,7 @@ pub use pallet_evm::{
 pub use pallet_ethereum::{
 	Transaction as EthereumTransaction, IntermediateStateRoot,
 };
+pub use fp_rpc::TransactionStatus;
 use frame_system::limits::{BlockLength, BlockWeights};
 pub use pallet_balances::Call as BalancesCall;
 pub use pallet_timestamp::Call as TimestampCall;
@@ -57,6 +58,8 @@ use xcm_builder::{
 use xcm_executor::{Config, XcmExecutor};
 
 pub type SessionHandlers = ();
+
+use sp_runtime::OpaqueExtrinsic as opaque_UncheckedExtrinsic;
 
 impl_opaque_keys! {
 	pub struct SessionKeys {}
@@ -446,6 +449,21 @@ construct_runtime! {
 		CumulusXcm: cumulus_pallet_xcm::{Pallet, Origin},
 
 		Spambot: cumulus_ping::{Pallet, Call, Storage, Event<T>} = 99,
+	}
+}
+
+pub struct TransactionConverter;
+impl fp_rpc::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
+	fn convert_transaction(&self, transaction: ethereum::Transaction) -> UncheckedExtrinsic {
+		UncheckedExtrinsic::new_unsigned(pallet_ethereum::Call::<Runtime>::transact(transaction).into())
+	}
+}
+
+impl fp_rpc::ConvertTransaction<opaque_UncheckedExtrinsic> for TransactionConverter {
+	fn convert_transaction(&self, transaction: ethereum::Transaction) -> opaque_UncheckedExtrinsic {
+		let extrinsic = UncheckedExtrinsic::new_unsigned(pallet_ethereum::Call::<Runtime>::transact(transaction).into());
+		let encoded = extrinsic.encode();
+		opaque_UncheckedExtrinsic::decode(&mut &encoded[..]).expect("Encoded extrinsic is always valid")
 	}
 }
 
