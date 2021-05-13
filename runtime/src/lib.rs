@@ -16,6 +16,8 @@ use sp_runtime::{
 	ApplyExtrinsicResult,
 };
 use sp_std::prelude::*;
+use sp_std::sync::Arc;
+
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
@@ -37,6 +39,7 @@ pub use pallet_evm::{
 pub use pallet_ethereum::{
 	Transaction as EthereumTransaction, IntermediateStateRoot,
 };
+use codec::{Decode, Encode};
 pub use fp_rpc::TransactionStatus;
 use frame_system::limits::{BlockLength, BlockWeights};
 pub use pallet_balances::Call as BalancesCall;
@@ -59,11 +62,16 @@ use xcm_executor::{Config, XcmExecutor};
 
 pub type SessionHandlers = ();
 
-use sp_runtime::OpaqueExtrinsic as opaque_UncheckedExtrinsic;
+pub mod opaque {
+	use super::*;
 
-impl_opaque_keys! {
-	pub struct SessionKeys {}
+	pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
+
+	impl_opaque_keys! {
+		pub struct SessionKeys {}
+	}
 }
+
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
@@ -454,16 +462,16 @@ construct_runtime! {
 
 pub struct TransactionConverter;
 impl fp_rpc::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
-	fn convert_transaction(&self, transaction: ethereum::Transaction) -> UncheckedExtrinsic {
+	fn convert_transaction(&self, transaction: pallet_ethereum::Transaction) -> UncheckedExtrinsic {
 		UncheckedExtrinsic::new_unsigned(pallet_ethereum::Call::<Runtime>::transact(transaction).into())
 	}
 }
 
-impl fp_rpc::ConvertTransaction<opaque_UncheckedExtrinsic> for TransactionConverter {
-	fn convert_transaction(&self, transaction: ethereum::Transaction) -> opaque_UncheckedExtrinsic {
+impl fp_rpc::ConvertTransaction<opaque::UncheckedExtrinsic> for TransactionConverter {
+	fn convert_transaction(&self, transaction: pallet_ethereum::Transaction) -> opaque::UncheckedExtrinsic {
 		let extrinsic = UncheckedExtrinsic::new_unsigned(pallet_ethereum::Call::<Runtime>::transact(transaction).into());
-		let encoded = extrinsic.encode();
-		opaque_UncheckedExtrinsic::decode(&mut &encoded[..]).expect("Encoded extrinsic is always valid")
+		let encoded = Arc::new(extrinsic).encode();
+		opaque::UncheckedExtrinsic::decode(&mut &encoded[..]).expect("Encoded extrinsic is always valid")
 	}
 }
 
@@ -563,11 +571,11 @@ impl_runtime_apis! {
 		fn decode_session_keys(
 			encoded: Vec<u8>,
 		) -> Option<Vec<(Vec<u8>, sp_core::crypto::KeyTypeId)>> {
-			SessionKeys::decode_into_raw_public_keys(&encoded)
+			opaque::SessionKeys::decode_into_raw_public_keys(&encoded)
 		}
 
 		fn generate_session_keys(seed: Option<Vec<u8>>) -> Vec<u8> {
-			SessionKeys::generate(seed)
+			opaque::SessionKeys::generate(seed)
 		}
 	}
 }
