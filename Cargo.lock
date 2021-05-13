@@ -530,6 +530,7 @@ dependencies = [
  "cumulus-ping",
  "cumulus-primitives-core",
  "cumulus-primitives-utility",
+ "fp-rpc",
  "frame-executive",
  "frame-support",
  "frame-system",
