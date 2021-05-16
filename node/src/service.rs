@@ -168,9 +168,25 @@ where
 			on_demand: None,
 			block_announce_validator_builder: Some(Box::new(|_| block_announce_validator)),
 		})?;
-
+	
+	let subscription_task_executor = sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 	let rpc_client = client.clone();
-	let rpc_extensions_builder = Box::new(move |_, _| rpc_ext_builder(rpc_client.clone()));
+	let pool = transaction_pool.clone();
+	let rpc_extensions_builder = {
+
+		Box::new(move |deny_unsafe, _| {
+			let deps = crate::rpc::FullDeps {
+				client: client.clone(),
+				/// Transaction pool instance.
+				pool: pool.clone(),
+				/// Whether to deny unsafe calls
+				deny_unsafe,
+				/// The Node authority flag
+				is_authority: collator,
+			};
+			crate::rpc::create_full(deps, subscription_task_executor.clone())
+		})
+	};
 
 	sc_service::spawn_tasks(sc_service::SpawnTasksParams {
 		on_demand: None,

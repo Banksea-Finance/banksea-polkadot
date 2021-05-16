@@ -52,6 +52,8 @@ sc-chain-spec = { git = "https://github.com/paritytech/substrate", branch = "roc
 sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
 sc-tracing = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
 sp-offchain = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
+fp-rpc = { git = "https://github.com/PureStake/frontier", branch = "rococo-v1" }
+fc-rpc = { git = "https://github.com/PureStake/frontier", branch = "rococo-v1" }
 
 # RPC related dependencies
 jsonrpc-core = "15.1.0"

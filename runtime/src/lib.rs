@@ -66,7 +66,8 @@ pub mod opaque {
 	use super::*;
 
 	pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
-
+	pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+	
 	impl_opaque_keys! {
 		pub struct SessionKeys {}
 	}
