@@ -182,7 +182,7 @@ where
 				/// Whether to deny unsafe calls
 				deny_unsafe,
 				/// The Node authority flag
-				is_authority: collator,
+				is_authority: validator,
 			};
 			crate::rpc::create_full(deps, subscription_task_executor.clone())
 		})

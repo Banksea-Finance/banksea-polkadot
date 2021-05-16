@@ -2,7 +2,7 @@
 
 use std::{fmt, sync::Arc};
 
-use banksy_runtime::{opaque::Block, AccountId, Balance, Index, UncheckedExtrinsic};
+use parachain_runtime::{opaque::Block, AccountId, Balance, Index, UncheckedExtrinsic};
 use sc_client_api::backend::{Backend, StateBackend, StorageProvider};
 use sc_rpc_api::DenyUnsafe;
 use sp_api::ProvideRuntimeApi;
@@ -49,7 +49,7 @@ where
 		Balance,
 		UncheckedExtrinsic,
 	>,
-	C::Api: fp_rpc::EthereumRuntimeApi<Block>,
+	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
 	<C::Api as sp_api::ApiErrorExt>::Error: fmt::Debug,
 	P: TransactionPool<Block = Block> + 'static,
 	M: jsonrpc_core::Metadata + Default,
@@ -78,7 +78,7 @@ where
         EthApiServer::to_delegate(EthApi::new(
             client.clone(),
 		    pool.clone(),
-		    banksy_runtime::TransactionConverter,
+		    parachain_runtime::TransactionConverter,
 		    is_authority,
 	    ))
     );

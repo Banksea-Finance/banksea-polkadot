@@ -6,7 +6,7 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-use rococo_parachain_primitives::*;
+pub use rococo_parachain_primitives::*;
 use sp_api::impl_runtime_apis;
 use sp_core::{OpaqueMetadata, U256, H256, H160};
 use sp_runtime::{

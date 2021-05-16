@@ -33,6 +33,7 @@ sp-core = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1
 sp-inherents = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
 sp-consensus = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
 sp-session = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
 sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
 sc-cli = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
 sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
@@ -50,10 +51,13 @@ sp-trie = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1
 sc-finality-grandpa = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
 sc-chain-spec = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
 sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
+sc-rpc-api = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
 sc-tracing = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
 sp-offchain = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
 fp-rpc = { git = "https://github.com/PureStake/frontier", branch = "rococo-v1" }
 fc-rpc = { git = "https://github.com/PureStake/frontier", branch = "rococo-v1" }
+pallet-transaction-payment-rpc = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
+substrate-frame-rpc-system = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
 
 # RPC related dependencies
 jsonrpc-core = "15.1.0"

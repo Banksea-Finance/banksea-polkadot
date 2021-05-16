@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sp_core::{Pair, Public, sr25519};
 use sp_runtime::traits::{IdentifyAccount, Verify};
-use banksy_runtime::{EVMConfig, EthereumConfig};
+use parachain_runtime::{EVMConfig, EthereumConfig};
 use std::collections::BTreeMap;
 
 use rococo_parachain_primitives::{AccountId, Signature};
