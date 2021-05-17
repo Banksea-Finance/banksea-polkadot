@@ -540,6 +540,7 @@ dependencies = [
  "frame-executive",
  "frame-support",
  "frame-system",
+ "frame-system-rpc-runtime-api",
  "log",
  "pallet-balances",
  "pallet-ethereum",

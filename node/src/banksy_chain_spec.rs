@@ -232,6 +232,6 @@ fn testnet_genesis(
         pallet_evm: EVMConfig {
 			accounts: BTreeMap::new(),
 		},
-        pallet_ethereum: Some(EthereumConfig {}),
+        pallet_ethereum: EthereumConfig {},
     }
 }

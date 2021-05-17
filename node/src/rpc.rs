@@ -1,10 +1,11 @@
 //! A collection of node-specific RPC methods.
 
-use std::{fmt, sync::Arc};
+use std::{sync::Arc};
 
-use parachain_runtime::{opaque::Block, AccountId, Balance, Index, UncheckedExtrinsic};
+use parachain_runtime::{opaque::Block, AccountId, Balance, Index};
 use sc_client_api::backend::{Backend, StateBackend, StorageProvider};
 use sc_rpc_api::DenyUnsafe;
+use sc_rpc::SubscriptionTaskExecutor;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_consensus::SelectChain;
@@ -24,7 +25,7 @@ pub struct LightDeps<C, F, P> {
 }
 
 /// Full client dependencies.
-pub struct FullDeps<C, P, SC> {
+pub struct FullDeps<C, P> {
 	/// The client instance to use.
 	pub client: Arc<C>,
 	/// Transaction pool instance.
@@ -36,7 +37,10 @@ pub struct FullDeps<C, P, SC> {
 }
 
 /// Instantiate all Full RPC extensions.
-pub fn create_full<C, P, M, SC, BE>(deps: FullDeps<C, P, SC>) -> jsonrpc_core::IoHandler<M>
+pub fn create_full<C, P, M, BE>(
+	deps: FullDeps<C, P>,
+	subscription_task_executor: SubscriptionTaskExecutor,
+) -> jsonrpc_core::IoHandler<M>
 where
 	BE: Backend<Block> + 'static,
 	BE::State: StateBackend<BlakeTwo256>,
@@ -44,16 +48,10 @@ where
 	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError> + 'static,
 	C: Send + Sync + 'static,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
-	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<
-		Block,
-		Balance,
-		UncheckedExtrinsic,
-	>,
+	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
-	<C::Api as sp_api::ApiErrorExt>::Error: fmt::Debug,
 	P: TransactionPool<Block = Block> + 'static,
 	M: jsonrpc_core::Metadata + Default,
-	SC: SelectChain<Block> + 'static,
 {
 	use fc_rpc::{EthApi, EthApiServer};
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
@@ -70,6 +68,7 @@ where
 	io.extend_with(SystemApi::to_delegate(FullSystem::new(
 		client.clone(),
 		pool.clone(),
+		deny_unsafe,
 	)));
 	io.extend_with(TransactionPaymentApi::to_delegate(TransactionPayment::new(
 		client.clone(),
