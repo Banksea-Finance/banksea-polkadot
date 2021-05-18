@@ -2,7 +2,8 @@
 
 use std::{sync::Arc};
 
-use parachain_runtime::{opaque::Block, AccountId, Balance, Index};
+use parachain_runtime::{opaque::Block, AccountId, Balance, Index, Hash};
+use pallet_ethereum::EthereumStorageSchema;
 use sc_client_api::backend::{Backend, StateBackend, StorageProvider};
 use sc_rpc_api::DenyUnsafe;
 use sc_rpc::SubscriptionTaskExecutor;
@@ -12,6 +13,8 @@ use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_consensus::SelectChain;
 use sp_runtime::traits::BlakeTwo256;
 use sp_transaction_pool::TransactionPool;
+use sc_network::NetworkService;
+use fc_rpc_core::types::PendingTransactions;
 
 /// Light client extra dependencies.
 pub struct LightDeps<C, F, P> {
@@ -35,6 +38,12 @@ pub struct FullDeps<C, P> {
 	pub deny_unsafe: DenyUnsafe,
 	/// The Node authority flag
 	pub is_authority: bool,
+	/// Network service
+	pub network: Arc<NetworkService<Block, Hash>>,
+	/// Ethereum pending transactions.
+	pub pending_transactions: PendingTransactions,
+	/// Frontier Backend.
+	pub frontier_backend: Arc<fc_db::Backend<Block>>,
 }
 
 /// Instantiate all Full RPC extensions.
@@ -65,6 +74,9 @@ where
 		pool,
 		deny_unsafe,
 		is_authority,
+		network,
+		pending_transactions,
+		frontier_backend,
 	} = deps;
 
 	io.extend_with(SystemApi::to_delegate(FullSystem::new(
@@ -75,11 +87,26 @@ where
 	io.extend_with(TransactionPaymentApi::to_delegate(TransactionPayment::new(
 		client.clone(),
 	)));
+
+	let signers = Vec::new();
+
+	let mut overrides = BTreeMap::new();
+	overrides.insert(
+		EthereumStorageSchema::V1,
+		Box::new(SchemaV1Override::new(client.clone()))
+			as Box<dyn StorageOverride<_> + Send + Sync>,
+	);
+	
 	io.extend_with(
         EthApiServer::to_delegate(EthApi::new(
             client.clone(),
 		    pool.clone(),
 		    parachain_runtime::TransactionConverter,
+			network.clone(),
+			pending_transactions,
+			signers,
+			overrides,
+			frontier_backend.clone(),
 		    is_authority,
 	    ))
     );

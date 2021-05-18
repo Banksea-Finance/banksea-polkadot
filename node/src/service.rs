@@ -15,7 +15,10 @@ use sc_service::{Configuration, PartialComponents, Role, TFullBackend, TFullClie
 use sc_telemetry::{Telemetry, TelemetryWorker, TelemetryWorkerHandle};
 use sp_runtime::traits::BlakeTwo256;
 use sp_trie::PrefixedMemoryDB;
-use std::sync::Arc;
+use std::{
+	sync::{Arc, Mutex},
+	collections::{BTreeMap, HashMap},
+};
 
 // Native executor instance.
 native_executor_instance!(
@@ -23,6 +26,27 @@ native_executor_instance!(
 	parachain_runtime::api::dispatch,
 	parachain_runtime::native_version,
 );
+
+pub fn open_frontier_backend(config: &Configuration) -> Result<Arc<fc_db::Backend<Block>>, String> {
+	let config_dir = config
+		.base_path
+		.as_ref()
+		.map(|base_path| base_path.config_dir(config.chain_spec.id()))
+		.unwrap_or_else(|| {
+			BasePath::from_project("", "", &crate::cli::Cli::executable_name())
+				.config_dir(config.chain_spec.id())
+		});
+	let database_dir = config_dir.join("frontier").join("db");
+
+	Ok(Arc::new(fc_db::Backend::<Block>::new(
+		&fc_db::DatabaseSettings {
+			source: fc_db::DatabaseSettingsSrc::RocksDb {
+				path: database_dir,
+				cache_size: 0,
+			},
+		},
+	)?))
+}
 
 /// Starts a `ServiceBuilder` for a full service.
 ///
@@ -87,6 +111,10 @@ pub fn new_partial(
 		registry.clone(),
 	)?;
 
+	let pending_transactions: PendingTransactions = Some(Arc::new(Mutex::new(HashMap::new())));
+
+	let frontier_backend = open_frontier_backend(config)?;
+
 	let params = PartialComponents {
 		backend,
 		client,
@@ -96,7 +124,7 @@ pub fn new_partial(
 		transaction_pool,
 		inherent_data_providers,
 		select_chain: (),
-		other: (telemetry, telemetry_worker_handle),
+		other: (telemetry, telemetry_worker_handle, pending_transactions, frontier_backend),
 	};
 
 	Ok(params)
@@ -132,7 +160,12 @@ where
 		.inherent_data_providers
 		.register_provider(sp_timestamp::InherentDataProvider)
 		.unwrap();
-	let (mut telemetry, telemetry_worker_handle) = params.other;
+	let (
+		mut telemetry, 
+		telemetry_worker_handle, 
+		pending_transactions,
+		frontier_backend,
+	) = params.other;
 
 	let polkadot_full_node =
 		cumulus_client_service::build_polkadot_full_node(
@@ -174,6 +207,9 @@ where
 		let subscription_task_executor = sc_rpc::SubscriptionTaskExecutor::new(task_manager.spawn_handle());
 		let rpc_client = client.clone();
 		let pool = transaction_pool.clone();
+		let network = network.clone();
+		let pending_transactions = pending_transactions.clone();
+		let frontier_backend = frontier_backend.clone();
 
 		Box::new(move |deny_unsafe, _| {
 			let deps = crate::rpc::FullDeps {
@@ -184,6 +220,12 @@ where
 				deny_unsafe,
 				/// The Node authority flag
 				is_authority: validator,
+				/// Network service
+				network: network.clone(),
+				/// Ethereum pending transactions.
+				pending_transactions: pending_transactions.clone(),
+				/// Frontier Backend.
+				frontier_backend: frontier_backend.clone(),
 			};
 			crate::rpc::create_full(deps, subscription_task_executor.clone())
 		})

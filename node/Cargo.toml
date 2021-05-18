@@ -54,8 +54,11 @@ sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1"
 sc-rpc-api = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
 sc-tracing = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
 sp-offchain = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
+fc-rpc-core = { git = "https://github.com/purestake/frontier", branch = "rococo-v1" }
 fp-rpc = { git = "https://github.com/PureStake/frontier", branch = "rococo-v1" }
 fc-rpc = { git = "https://github.com/PureStake/frontier", branch = "rococo-v1" }
+fc-db = { git = "https://github.com/purestake/frontier", branch = "rococo-v1" }
+pallet-ethereum = { git = "https://github.com/purestake/frontier", branch = "rococo-v1" }
 pallet-transaction-payment-rpc = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
 substrate-frame-rpc-system = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
 
