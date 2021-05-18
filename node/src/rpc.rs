@@ -7,6 +7,7 @@ use sc_client_api::backend::{Backend, StateBackend, StorageProvider};
 use sc_rpc_api::DenyUnsafe;
 use sc_rpc::SubscriptionTaskExecutor;
 use sp_api::ProvideRuntimeApi;
+use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_consensus::SelectChain;
 use sp_runtime::traits::BlakeTwo256;
@@ -50,6 +51,7 @@ where
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
+	C::Api: BlockBuilder<Block>,
 	P: TransactionPool<Block = Block> + 'static,
 	M: jsonrpc_core::Metadata + Default,
 {
