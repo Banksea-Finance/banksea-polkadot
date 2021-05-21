@@ -11,7 +11,10 @@ use polkadot_primitives::v0::CollatorPair;
 use rococo_parachain_primitives::Block;
 use sc_executor::native_executor_instance;
 pub use sc_executor::NativeExecutor;
-use sc_service::{Configuration, PartialComponents, Role, TFullBackend, TFullClient, TaskManager};
+use sc_service::{Configuration, PartialComponents, Role, TFullBackend, TFullClient, TaskManager,
+	BasePath,
+};
+use fc_rpc_core::types::PendingTransactions;
 use sc_telemetry::{Telemetry, TelemetryWorker, TelemetryWorkerHandle};
 use sp_runtime::traits::BlakeTwo256;
 use sp_trie::PrefixedMemoryDB;
@@ -19,6 +22,7 @@ use std::{
 	sync::{Arc, Mutex},
 	collections::{BTreeMap, HashMap},
 };
+use sc_cli::SubstrateCli;
 
 // Native executor instance.
 native_executor_instance!(
@@ -61,7 +65,7 @@ pub fn new_partial(
 		(),
 		sp_consensus::import_queue::BasicQueue<Block, PrefixedMemoryDB<BlakeTwo256>>,
 		sc_transaction_pool::FullPool<Block, TFullClient<Block, RuntimeApi, Executor>>,
-		(Option<Telemetry>, Option<TelemetryWorkerHandle>),
+		(Option<Telemetry>, Option<TelemetryWorkerHandle>, PendingTransactions, Arc<fc_db::Backend<Block>>,),
 	>,
 	sc_service::Error,
 > {
@@ -216,6 +220,7 @@ where
 				client: rpc_client.clone(),
 				/// Transaction pool instance.
 				pool: pool.clone(),
+				graph: pool.pool().clone(),
 				/// Whether to deny unsafe calls
 				deny_unsafe,
 				/// The Node authority flag

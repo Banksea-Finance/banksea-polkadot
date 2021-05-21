@@ -1,10 +1,11 @@
 //! A collection of node-specific RPC methods.
 
 use std::{sync::Arc};
+use std::collections::BTreeMap;
 
 use parachain_runtime::{opaque::Block, AccountId, Balance, Index, Hash};
 use pallet_ethereum::EthereumStorageSchema;
-use sc_client_api::backend::{Backend, StateBackend, StorageProvider};
+use sc_client_api::backend::{AuxStore, Backend, StateBackend, StorageProvider};
 use sc_rpc_api::DenyUnsafe;
 use sc_rpc::SubscriptionTaskExecutor;
 use sp_api::ProvideRuntimeApi;
@@ -15,6 +16,8 @@ use sp_runtime::traits::BlakeTwo256;
 use sp_transaction_pool::TransactionPool;
 use sc_network::NetworkService;
 use fc_rpc_core::types::PendingTransactions;
+use fc_rpc::{SchemaV1Override, StorageOverride};
+use sc_transaction_graph::{ChainApi, Pool};
 
 /// Light client extra dependencies.
 pub struct LightDeps<C, F, P> {
@@ -29,11 +32,13 @@ pub struct LightDeps<C, F, P> {
 }
 
 /// Full client dependencies.
-pub struct FullDeps<C, P> {
+pub struct FullDeps<C, P, A:ChainApi> {
 	/// The client instance to use.
 	pub client: Arc<C>,
 	/// Transaction pool instance.
 	pub pool: Arc<P>,
+	/// Graph pool instance.
+	pub graph: Arc<Pool<A>>,
 	/// Whether to deny unsafe calls
 	pub deny_unsafe: DenyUnsafe,
 	/// The Node authority flag
@@ -47,20 +52,21 @@ pub struct FullDeps<C, P> {
 }
 
 /// Instantiate all Full RPC extensions.
-pub fn create_full<C, P, M, BE>(
-	deps: FullDeps<C, P>,
+pub fn create_full<C, P, M, BE, A>(
+	deps: FullDeps<C, P, A>,
 	subscription_task_executor: SubscriptionTaskExecutor,
 ) -> jsonrpc_core::IoHandler<M>
 where
 	BE: Backend<Block> + 'static,
 	BE::State: StateBackend<BlakeTwo256>,
-	C: ProvideRuntimeApi<Block> + StorageProvider<Block, BE>,
+	C: ProvideRuntimeApi<Block> + StorageProvider<Block, BE> + AuxStore,
 	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError> + 'static,
 	C: Send + Sync + 'static,
 	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
 	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
 	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
 	C::Api: BlockBuilder<Block>,
+	A: ChainApi<Block = Block> + 'static,
 	P: TransactionPool<Block = Block> + 'static,
 	M: jsonrpc_core::Metadata + Default,
 {
@@ -72,6 +78,7 @@ where
 	let FullDeps {
 		client,
 		pool,
+		graph,
 		deny_unsafe,
 		is_authority,
 		network,
@@ -101,6 +108,7 @@ where
         EthApiServer::to_delegate(EthApi::new(
             client.clone(),
 		    pool.clone(),
+			graph,
 		    parachain_runtime::TransactionConverter,
 			network.clone(),
 			pending_transactions,
@@ -132,7 +140,7 @@ where
 		fetcher,
 	} = deps;
 	let mut io = jsonrpc_core::IoHandler::default();
-	io.extend_with(SystemApi::<AccountId, Index>::to_delegate(
+	io.extend_with(SystemApi::<Hash, AccountId, Index>::to_delegate(
 		LightSystem::new(client, remote_blockchain, fetcher, pool),
 	));
 
