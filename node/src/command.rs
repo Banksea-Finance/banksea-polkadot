@@ -1,21 +1,33 @@
+// Copyright 2019-2021 Parity Technologies (UK) Ltd.
+// This file is part of Cumulus.
+
+// Cumulus is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Cumulus is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
+
 use crate::{
-	banksy_chain_spec,
+	chain_spec,
 	cli::{Cli, RelayChainCli, Subcommand},
 };
 use codec::Encode;
-use cumulus_primitives_core::ParaId;
 use cumulus_client_service::genesis::generate_genesis_block;
+use cumulus_primitives_core::ParaId;
 use log::info;
-use parachain_runtime::Block;
 use polkadot_parachain::primitives::AccountIdConversion;
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
 	NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
 };
-use sc_service::{
-	config::{BasePath, PrometheusConfig},
-	PartialComponents,
-};
+use sc_service::config::{BasePath, PrometheusConfig};
 use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::Block as BlockT;
 use std::{io::Write, net::SocketAddr};
@@ -25,18 +37,26 @@ fn load_spec(
 	para_id: ParaId,
 ) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	match id {
-		"banksy" => Ok(Box::new(banksy_chain_spec::banksy_testnet_config(para_id))),
-		"dev" => Ok(Box::new(banksy_chain_spec::dev_chain_spec(para_id))),
-		"" => Ok(Box::new(banksy_chain_spec::get_chain_spec(para_id))),
-		path => Ok(Box::new(banksy_chain_spec::ChainSpec::from_json_file(
+		"staging" => Ok(Box::new(chain_spec::staging_test_net(para_id))),
+		"shell" => Ok(Box::new(chain_spec::get_shell_chain_spec(para_id))),
+		"" => Ok(Box::new(chain_spec::get_chain_spec(para_id))),
+		path => Ok({
+			let chain_spec = chain_spec::ChainSpec::from_json_file(
 			path.into(),
-		)?)),
+		)?;
+
+			if use_shell_runtime(&chain_spec) {
+				Box::new(chain_spec::ShellChainSpec::from_json_file(path.into())?)
+			} else {
+				Box::new(chain_spec)
+			}
+		}),
 	}
 }
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
-		"Test Parachain Collator".into()
+		"Polkadot collator".into()
 	}
 
 	fn impl_version() -> String {
@@ -45,7 +65,7 @@ impl SubstrateCli for Cli {
 
 	fn description() -> String {
 		format!(
-			"Test parachain collator\n\nThe command-line arguments provided first will be \
+			"Polkadot collator\n\nThe command-line arguments provided first will be \
 		passed to the parachain node, while the arguments provided after -- will be passed \
 		to the relaychain node.\n\n\
 		{} [parachain-args] -- [relaychain-args]",
@@ -69,14 +89,18 @@ impl SubstrateCli for Cli {
 		load_spec(id, self.run.parachain_id.unwrap_or(100).into())
 	}
 
-	fn native_runtime_version(_: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		&parachain_runtime::VERSION
+	fn native_runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
+		if use_shell_runtime(&**chain_spec) {
+			&shell_runtime::VERSION
+		} else {
+			&rococo_parachain_runtime::VERSION
+		}
 	}
 }
 
 impl SubstrateCli for RelayChainCli {
 	fn impl_name() -> String {
-		"Test Parachain Collator".into()
+		"Polkadot collator".into()
 	}
 
 	fn impl_version() -> String {
@@ -84,11 +108,13 @@ impl SubstrateCli for RelayChainCli {
 	}
 
 	fn description() -> String {
-		"Test parachain collator\n\nThe command-line arguments provided first will be \
+		format!(
+			"Polkadot collator\n\nThe command-line arguments provided first will be \
 		passed to the parachain node, while the arguments provided after -- will be passed \
 		to the relaychain node.\n\n\
-		bankasy-collator [parachain-args] -- [relaychain-args]"
-			.into()
+		{} [parachain-args] -- [relaychain-args]",
+			Self::executable_name()
+		)
 	}
 
 	fn author() -> String {
@@ -96,7 +122,7 @@ impl SubstrateCli for RelayChainCli {
 	}
 
 	fn support_url() -> String {
-		"".into()
+		"https://github.com/paritytech/cumulus/issues/new".into()
 	}
 
 	fn copyright_start_year() -> i32 {
@@ -122,6 +148,41 @@ fn extract_genesis_wasm(chain_spec: &Box<dyn sc_service::ChainSpec>) -> Result<V
 		.ok_or_else(|| "Could not find wasm file in genesis state!".into())
 }
 
+fn use_shell_runtime(chain_spec: &dyn ChainSpec) -> bool {
+	chain_spec.id().starts_with("shell")
+}
+
+use crate::service::{new_partial, RococoParachainRuntimeExecutor, ShellRuntimeExecutor};
+
+macro_rules! construct_async_run {
+	(|$components:ident, $cli:ident, $cmd:ident, $config:ident| $( $code:tt )* ) => {{
+		let runner = $cli.create_runner($cmd)?;
+		if use_shell_runtime(&*runner.config().chain_spec) {
+			runner.async_run(|$config| {
+				let $components = new_partial::<shell_runtime::RuntimeApi, ShellRuntimeExecutor, _>(
+					&$config,
+					crate::service::shell_build_import_queue,
+				)?;
+				let task_manager = $components.task_manager;
+				{ $( $code )* }.map(|v| (v, task_manager))
+			})
+		} else {
+			runner.async_run(|$config| {
+				let $components = new_partial::<
+					rococo_parachain_runtime::RuntimeApi,
+					RococoParachainRuntimeExecutor,
+					_
+				>(
+					&$config,
+					crate::service::rococo_parachain_build_import_queue,
+				)?;
+				let task_manager = $components.task_manager;
+				{ $( $code )* }.map(|v| (v, task_manager))
+			})
+		}
+	}}
+}
+
 /// Parse command line arguments into service configuration.
 pub fn run() -> Result<()> {
 	let cli = Cli::from_args();
@@ -132,49 +193,23 @@ pub fn run() -> Result<()> {
 			runner.sync_run(|config| cmd.run(config.chain_spec, config.network))
 		}
 		Some(Subcommand::CheckBlock(cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			runner.async_run(|config| {
-				let PartialComponents {
-					client,
-					task_manager,
-					import_queue,
-					..
-				} = crate::service::new_partial(&config)?;
-				Ok((cmd.run(client, import_queue), task_manager))
+			construct_async_run!(|components, cli, cmd, config| {
+				Ok(cmd.run(components.client, components.import_queue))
 			})
 		}
 		Some(Subcommand::ExportBlocks(cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			runner.async_run(|config| {
-				let PartialComponents {
-					client,
-					task_manager,
-					..
-				} = crate::service::new_partial(&config)?;
-				Ok((cmd.run(client, config.database), task_manager))
+			construct_async_run!(|components, cli, cmd, config| {
+				Ok(cmd.run(components.client, config.database))
 			})
 		}
 		Some(Subcommand::ExportState(cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			runner.async_run(|config| {
-				let PartialComponents {
-					client,
-					task_manager,
-					..
-				} = crate::service::new_partial(&config)?;
-				Ok((cmd.run(client, config.chain_spec), task_manager))
+			construct_async_run!(|components, cli, cmd, config| {
+				Ok(cmd.run(components.client, config.chain_spec))
 			})
 		}
 		Some(Subcommand::ImportBlocks(cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			runner.async_run(|config| {
-				let PartialComponents {
-					client,
-					task_manager,
-					import_queue,
-					..
-				} = crate::service::new_partial(&config)?;
-				Ok((cmd.run(client, import_queue), task_manager))
+			construct_async_run!(|components, cli, cmd, config| {
+				Ok(cmd.run(components.client, components.import_queue))
 			})
 		}
 		Some(Subcommand::PurgeChain(cmd)) => {
@@ -198,26 +233,17 @@ pub fn run() -> Result<()> {
 				cmd.run(config, polkadot_config)
 			})
 		}
-		Some(Subcommand::Revert(cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			runner.async_run(|config| {
-				let PartialComponents {
-					client,
-					task_manager,
-					backend,
-					..
-				} = crate::service::new_partial(&config)?;
-				Ok((cmd.run(client, backend), task_manager))
-			})
-		}
+		Some(Subcommand::Revert(cmd)) => construct_async_run!(|components, cli, cmd, config| {
+			Ok(cmd.run(components.client, components.backend))
+		}),
 		Some(Subcommand::ExportGenesisState(params)) => {
 			let mut builder = sc_cli::LoggerBuilder::new("");
 			builder.with_profiling(sc_tracing::TracingReceiver::Log, "");
 			let _ = builder.init();
 
-			let block: Block = generate_genesis_block(&load_spec(
+			let block: crate::service::Block = generate_genesis_block(&load_spec(
 				&params.chain.clone().unwrap_or_default(),
-				params.parachain_id.into(),
+				params.parachain_id.unwrap_or(100).into(),
 			)?)?;
 			let raw_header = block.header().encode();
 			let output_buf = if params.raw {
@@ -256,14 +282,15 @@ pub fn run() -> Result<()> {
 			Ok(())
 		}
 		None => {
-			let runner = cli.create_runner(&*cli.run)?;
+			let runner = cli.create_runner(&cli.run.normalize())?;
+			let use_shell = use_shell_runtime(&*runner.config().chain_spec);
 
 			runner.run_node_until_exit(|config| async move {
 				// TODO
 				let key = sp_core::Pair::generate().0;
 
 				let para_id =
-					banksy_chain_spec::Extensions::try_get(&*config.chain_spec).map(|e| e.para_id);
+					chain_spec::Extensions::try_get(&*config.chain_spec).map(|e| e.para_id);
 
 				let polkadot_cli = RelayChainCli::new(
 					&config,
@@ -277,28 +304,38 @@ pub fn run() -> Result<()> {
 				let parachain_account =
 					AccountIdConversion::<polkadot_primitives::v0::AccountId>::into_account(&id);
 
-				let block: Block =
+				let block: crate::service::Block =
 					generate_genesis_block(&config.chain_spec).map_err(|e| format!("{:?}", e))?;
 				let genesis_state = format!("0x{:?}", HexDisplay::from(&block.header().encode()));
 
 				let task_executor = config.task_executor.clone();
-				let polkadot_config = SubstrateCli::create_configuration(
-					&polkadot_cli,
-					&polkadot_cli,
-					task_executor,
-				)
-				.map_err(|err| format!("Relay chain argument error: {}", err))?;
-				let collator = cli.run.base.validator || cli.collator;
+				let polkadot_config =
+					SubstrateCli::create_configuration(&polkadot_cli, &polkadot_cli, task_executor)
+						.map_err(|err| format!("Relay chain argument error: {}", err))?;
 
 				info!("Parachain id: {:?}", id);
 				info!("Parachain Account: {}", parachain_account);
 				info!("Parachain genesis state: {}", genesis_state);
-				info!("Is collating: {}", if collator { "yes" } else { "no" });
+				info!(
+					"Is collating: {}",
+					if config.role.is_authority() {
+						"yes"
+					} else {
+						"no"
+					}
+				);
 
-				crate::service::start_node(config, key, polkadot_config, id, collator)
-					.await
-					.map(|r| r.0)
-					.map_err(Into::into)
+				if use_shell {
+					crate::service::start_shell_node(config, key, polkadot_config, id)
+						.await
+						.map(|r| r.0)
+						.map_err(Into::into)
+				} else {
+					crate::service::start_rococo_parachain_node(config, key, polkadot_config, id)
+						.await
+						.map(|r| r.0)
+						.map_err(Into::into)
+				}
 			})
 		}
 	}

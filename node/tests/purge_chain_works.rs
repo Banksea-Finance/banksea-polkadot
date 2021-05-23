@@ -1,3 +1,19 @@
+// Copyright 2020-2021 Parity Technologies (UK) Ltd.
+// This file is part of Substrate.
+
+// Substrate is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Substrate is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Substrate.  If not, see <http://www.gnu.org/licenses/>.
+
 use assert_cmd::cargo::cargo_bin;
 use std::{convert::TryInto, process::Command, thread, time::Duration};
 
@@ -14,7 +30,7 @@ fn purge_chain_works() {
 
 		let base_path = tempfile::tempdir().unwrap();
 
-		let mut cmd = Command::new(cargo_bin("bankasy-collator"))
+		let mut cmd = Command::new(cargo_bin("polkadot-collator"))
 			.args(&["-d"])
 			.arg(base_path.path())
 			.args(&["--"])
@@ -44,7 +60,7 @@ fn purge_chain_works() {
 		assert!(base_path.path().join("chains/local_testnet/db").exists());
 		assert!(base_path.path().join("polkadot/chains/westend_dev/db").exists());
 
-		let status = Command::new(cargo_bin("bankasy-collator"))
+		let status = Command::new(cargo_bin("polkadot-collator"))
 			.args(&["purge-chain", "-d"])
 			.arg(base_path.path())
 			.arg("-y")

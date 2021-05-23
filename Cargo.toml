@@ -1,7 +1,8 @@
 [workspace]
 members = [
 	"node",
-	"runtime",
+	"runtime/rococo-runtime",
+	"runtime/shell-runtime",
 ]
 
 [profile.release]

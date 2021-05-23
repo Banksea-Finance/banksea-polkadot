@@ -1,3 +1,19 @@
+// Copyright 2019-2021 Parity Technologies (UK) Ltd.
+// This file is part of Cumulus.
+
+// Cumulus is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// Cumulus is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with Cumulus.  If not, see <http://www.gnu.org/licenses/>.
+
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
@@ -60,17 +76,18 @@ impl_opaque_keys! {
 }
 
 /// This runtime version.
+#[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-	spec_name: create_runtime_str!("banksy-test-parachain"),
-	impl_name: create_runtime_str!("banksy-test-parachain"),
+	spec_name: create_runtime_str!("test-parachain"),
+	impl_name: create_runtime_str!("test-parachain"),
 	authoring_version: 1,
-	spec_version: 18,
+	spec_version: 14,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
 };
 
-pub const MILLISECS_PER_BLOCK: u64 = 6000;
+pub const MILLISECS_PER_BLOCK: u64 = 12000;
 
 pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
@@ -81,9 +98,9 @@ pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
 pub const HOURS: BlockNumber = MINUTES * 60;
 pub const DAYS: BlockNumber = HOURS * 24;
 
-pub const BKS: Balance = 1_000_000_000_000;
-pub const MILLIBKS: Balance = 1_000_000_000;
-pub const MICROBKS: Balance = 1_000_000;
+pub const ROC: Balance = 1_000_000_000_000;
+pub const MILLIROC: Balance = 1_000_000_000;
+pub const MICROROC: Balance = 1_000_000;
 
 // 1 in 4 blocks (on average, not counting collisions) will be primary babe blocks.
 pub const PRIMARY_PROBABILITY: (u64, u64) = (1, 4);
@@ -184,10 +201,10 @@ impl pallet_timestamp::Config for Runtime {
 }
 
 parameter_types! {
-	pub const ExistentialDeposit: u128 = 1 * MILLIBKS;
-	pub const TransferFee: u128 = 1 * MILLIBKS;
-	pub const CreationFee: u128 = 1 * MILLIBKS;
-	pub const TransactionByteFee: u128 = 1 * MICROBKS;
+	pub const ExistentialDeposit: u128 = 1 * MILLIROC;
+	pub const TransferFee: u128 = 1 * MILLIROC;
+	pub const CreationFee: u128 = 1 * MILLIROC;
+	pub const TransactionByteFee: u128 = 1 * MICROROC;
 	pub const MaxLocks: u32 = 50;
 }
 
@@ -236,8 +253,8 @@ impl parachain_info::Config for Runtime {}
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 
 parameter_types! {
-	pub const BksLocation: MultiLocation = X1(Parent);
-	pub const BanksyNetwork: NetworkId = NetworkId::Polkadot;
+	pub const RocLocation: MultiLocation = X1(Parent);
+	pub const RococoNetwork: NetworkId = NetworkId::Polkadot;
 	pub RelayChainOrigin: Origin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub Ancestry: MultiLocation = X1(Parachain(ParachainInfo::parachain_id().into()));
 }
@@ -251,7 +268,7 @@ pub type LocationToAccountId = (
 	// Sibling parachain origins convert to AccountId via the `ParaId::into`.
 	SiblingParachainConvertsVia<Sibling, AccountId>,
 	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
-	AccountId32Aliases<BanksyNetwork, AccountId>,
+	AccountId32Aliases<RococoNetwork, AccountId>,
 );
 
 /// Means for transacting assets on this chain.
@@ -259,7 +276,7 @@ pub type LocalAssetTransactor = CurrencyAdapter<
 	// Use this currency:
 	Balances,
 	// Use this currency when it is a fungible asset matching the given location or name:
-	IsConcrete<BksLocation>,
+	IsConcrete<RocLocation>,
 	// Do a simple punn to convert an AccountId32 MultiLocation into a native chain account ID:
 	LocationToAccountId,
 	// Our chain's account ID type (we can't get away without mentioning it explicitly):
@@ -287,7 +304,7 @@ pub type XcmOriginToTransactDispatchOrigin = (
 	ParentAsSuperuser<Origin>,
 	// Native signed account converter; this just converts an `AccountId32` origin into a normal
 	// `Origin::Signed` origin of the same 32-byte value.
-	SignedAccountId32AsNative<BanksyNetwork, Origin>,
+	SignedAccountId32AsNative<RococoNetwork, Origin>,
 	// Xcm origins can be represented natively under the Xcm pallet's Xcm origin.
 	XcmPassthrough<Origin>,
 );
@@ -295,8 +312,8 @@ pub type XcmOriginToTransactDispatchOrigin = (
 parameter_types! {
 	// One XCM operation is 1_000_000 weight - almost certainly a conservative estimate.
 	pub UnitWeightCost: Weight = 1_000_000;
-	// One BKS buys 1 second of weight.
-	pub const WeightPrice: (MultiLocation, u128) = (X1(Parent), BKS);
+	// One ROC buys 1 second of weight.
+	pub const WeightPrice: (MultiLocation, u128) = (X1(Parent), ROC);
 }
 
 match_type! {
@@ -320,17 +337,17 @@ impl Config for XcmConfig {
 	type AssetTransactor = LocalAssetTransactor;
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
 	type IsReserve = NativeAsset;
-	type IsTeleporter = NativeAsset;	// <- should be enough to allow teleportation of BKS
+	type IsTeleporter = NativeAsset;	// <- should be enough to allow teleportation of ROC
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call>;
-	type Trader = UsingComponents<IdentityFee<Balance>, BksLocation, AccountId, Balances, ()>;
+	type Trader = UsingComponents<IdentityFee<Balance>, RocLocation, AccountId, Balances, ()>;
 	type ResponseHandler = ();	// Don't handle responses for now.
 }
 
 /// No local origins on this chain are allowed to dispatch XCM sends/executions.
 pub type LocalOriginToLocation = (
-	SignedToAccountId32<Origin, AccountId, BanksyNetwork>,
+	SignedToAccountId32<Origin, AccountId, RococoNetwork>,
 );
 
 /// The means for routing XCM messages which are not for local execution into the right message
@@ -350,6 +367,7 @@ impl pallet_xcm::Config for Runtime {
 	type XcmExecuteFilter = All<(MultiLocation, Xcm<Call>)>;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type XcmTeleportFilter = All<(MultiLocation, Vec<MultiAsset>)>;
+	type XcmReserveTransferFilter = ();
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call>;
 }
 
@@ -378,16 +396,16 @@ impl cumulus_ping::Config for Runtime {
 }
 
 parameter_types! {
-	pub const AssetDeposit: Balance = 1 * BKS;
-	pub const ApprovalDeposit: Balance = 100 * MILLIBKS;
+	pub const AssetDeposit: Balance = 1 * ROC;
+	pub const ApprovalDeposit: Balance = 100 * MILLIROC;
 	pub const StringLimit: u32 = 50;
-	pub const MetadataDepositBase: Balance = 1 * BKS;
-	pub const MetadataDepositPerByte: Balance = 10 * MILLIBKS;
+	pub const MetadataDepositBase: Balance = 1 * ROC;
+	pub const MetadataDepositPerByte: Balance = 10 * MILLIROC;
 	pub const UnitBody: BodyId = BodyId::Unit;
 }
 
-/// A majority of the Unit body from Banksy over XCM is our required administration origin.
-pub type AdminOrigin = EnsureXcm<IsMajorityOfBody<BksLocation, UnitBody>>;
+/// A majority of the Unit body from Rococo over XCM is our required administration origin.
+pub type AdminOrigin = EnsureXcm<IsMajorityOfBody<RocLocation, UnitBody>>;
 
 impl pallet_assets::Config for Runtime {
 	type Event = Event;
