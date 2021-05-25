@@ -1,6 +1,7 @@
 use crate::banksy_chain_spec;
 use sc_cli;
 use std::path::PathBuf;
+use std::str::FromStr;
 use structopt::StructOpt;
 
 /// Sub-commands supported by the collator.
@@ -80,6 +81,9 @@ pub struct RunCmd {
 	/// Id of the parachain this collator collates for.
 	#[structopt(long)]
 	pub parachain_id: Option<u32>,
+
+	#[structopt(long, default_value = "manual")]
+	pub sealing: Sealing,
 }
 
 impl std::ops::Deref for RunCmd {
@@ -143,5 +147,31 @@ impl RelayChainCli {
 			chain_id,
 			base: polkadot_cli::RunCmd::from_iter(relay_chain_args),
 		}
+	}
+}
+
+
+#[derive(Debug)]
+pub enum Sealing {
+	///Author a block upon receiving a transaction
+	Instant,
+	///Author a block when receiving RPC command
+	Manual,
+	///Author a block after a specified time 
+	Interval(u64),
+}
+
+impl FromStr for Sealing {
+	type Err = String;
+
+	fn from_str(s: &str) -> Result<Self, Self::Err> {
+		Ok(match s {
+			"instant" => Self::Instant,
+			"manual" => Self::Manual,
+			s => {
+				let fixed_time = u64::from_str_radix(s, 10).map_err(|_| "decode error")?;
+				Self::Interval(fixed_time)
+			}
+		})
 	}
 }
