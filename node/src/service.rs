@@ -14,6 +14,7 @@ pub use sc_executor::NativeExecutor;
 use sc_service::{Configuration, PartialComponents, Role, TFullBackend, TFullClient, TaskManager,
 	BasePath,
 };
+use sc_consensus_manual_seal::{ManualSealParams, EngineCommand, run_manual_seal};
 use fc_rpc_core::types::PendingTransactions;
 use sc_telemetry::{Telemetry, TelemetryWorker, TelemetryWorkerHandle};
 use sp_runtime::traits::BlakeTwo256;
@@ -23,6 +24,7 @@ use std::{
 	collections::{BTreeMap, HashMap},
 };
 use sc_cli::SubstrateCli;
+use crate::cli::{RunCmd, Sealing};
 
 // Native executor instance.
 native_executor_instance!(
@@ -130,6 +132,70 @@ pub fn new_partial(
 		select_chain: (),
 		other: (telemetry, telemetry_worker_handle, pending_transactions, frontier_backend),
 	};
+
+	let collator = cli.run.base.validator || cli.collator;
+	let cmd = cli.run;
+	if collator {
+		let env = sc_basic_authorship::ProposerFactory::new(
+			task_manager.spawn_handle(),
+			client.clone(),
+			transaction_pool.clone(),
+			prometheus_registry.as_ref(),
+			telemetry.as_ref().map(|x| x.handle()),
+		);
+		let commands_stream: Box<dyn Stream<Item = EngineCommand<H256>> + Send + Sync + Unpin> = match cmd.sealing {		
+			Sealing::Instant => {
+				Box::new(
+					transaction_pool
+						.pool()
+						.validated_pool()
+						.import_notification_stream()
+						.map(|_| EngineCommand::SealNewBlock {
+							create_empty: false,
+							finalize: false,
+							parent_hash: None,
+							sender: None,
+						}),
+				)
+			}
+			Sealing::Manual => {
+				let (sink, stream) = futures::channel::mpsc::channel(1000);
+				// Keep a reference to the other end of the channel. It goes to the RPC.
+				command_sink = Some(sink);
+				Box::new(stream)
+			}
+			Sealing::Interval(fixed_time) => Box::new(StreamExt::map(
+				Timer::interval(Duration::from_millis(millis)),
+				|_| EngineCommand::SealNewBlock {
+					create_empty: true,
+					finalize: false,
+					parent_hash: None,
+					sender: None,
+				},
+			)),
+		};
+
+		let select_chain = maybe_select_chain.expect(
+			"`new_partial` builds a `LongestChainRule` when building dev service.\
+				We specified the dev service when calling `new_partial`.\
+				Therefore, a `LongestChainRule` is present. qed.",
+		);
+
+		task_manager.spawn_essential_handle().spawn_blocking(
+			"authorship_task",
+			run_manual_seal(ManualSealParams {
+				block_import,
+				env,
+				client: client.clone(),
+				pool: transaction_pool.pool().clone(),
+				commands_stream,
+				select_chain,
+				consensus_data_provider: None,
+				inherent_data_providers,
+			}),
+		);
+	}
+	
 
 	Ok(params)
 }
