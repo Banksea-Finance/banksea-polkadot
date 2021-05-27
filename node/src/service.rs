@@ -22,9 +22,14 @@ use sp_trie::PrefixedMemoryDB;
 use std::{
 	sync::{Arc, Mutex},
 	collections::{BTreeMap, HashMap},
+	time::Duration,
 };
 use sc_cli::SubstrateCli;
 use crate::cli::{RunCmd, Sealing};
+use async_io::Timer;
+use futures::{Stream, StreamExt};
+use sp_core::H256;
+use fc_consensus::FrontierBlockImport;
 
 // Native executor instance.
 native_executor_instance!(
@@ -99,6 +104,12 @@ pub fn new_partial(
 			telemetry
 		});
 
+	let maybe_select_chain = if dev_service {
+		Some(sc_consensus::LongestChain::new(backend.clone()))
+	} else {
+		None
+	};
+
 	let registry = config.prometheus_registry();
 
 	let transaction_pool = sc_transaction_pool::BasicPool::new_full(
@@ -133,8 +144,11 @@ pub fn new_partial(
 		other: (telemetry, telemetry_worker_handle, pending_transactions, frontier_backend),
 	};
 
+	let cli = Cli::from_args();
 	let collator = cli.run.base.validator || cli.collator;
 	let cmd = cli.run;
+	let prometheus_registry = config.prometheus_registry().cloned();
+	let mut command_sink = None;
 	if collator {
 		let env = sc_basic_authorship::ProposerFactory::new(
 			task_manager.spawn_handle(),
@@ -165,7 +179,7 @@ pub fn new_partial(
 				Box::new(stream)
 			}
 			Sealing::Interval(fixed_time) => Box::new(StreamExt::map(
-				Timer::interval(Duration::from_millis(millis)),
+				Timer::interval(Duration::from_millis(fixed_time)),
 				|_| EngineCommand::SealNewBlock {
 					create_empty: true,
 					finalize: false,
@@ -180,7 +194,9 @@ pub fn new_partial(
 				We specified the dev service when calling `new_partial`.\
 				Therefore, a `LongestChainRule` is present. qed.",
 		);
-
+		
+		let block_import =
+		FrontierBlockImport::new(client.clone(), client.clone(), frontier_backend.clone());
 		task_manager.spawn_essential_handle().spawn_blocking(
 			"authorship_task",
 			run_manual_seal(ManualSealParams {
