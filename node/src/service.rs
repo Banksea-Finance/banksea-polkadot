@@ -65,6 +65,9 @@ pub fn open_frontier_backend(config: &Configuration) -> Result<Arc<fc_db::Backen
 /// be able to perform chain operations.
 pub fn new_partial(
 	config: &Configuration,
+	dev_service: bool
+	collator: bool,
+	cmd: RunCmd,
 ) -> Result<
 	PartialComponents<
 		TFullClient<Block, RuntimeApi, Executor>,
@@ -144,9 +147,6 @@ pub fn new_partial(
 		other: (telemetry, telemetry_worker_handle, pending_transactions, frontier_backend),
 	};
 
-	let cli = Cli::from_args();
-	let collator = cli.run.base.validator || cli.collator;
-	let cmd = cli.run;
 	let prometheus_registry = config.prometheus_registry().cloned();
 	let mut command_sink = None;
 	if collator {

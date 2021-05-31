@@ -133,47 +133,67 @@ pub fn run() -> Result<()> {
 		}
 		Some(Subcommand::CheckBlock(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
+			let dev_service =
+					cli.run.dev_service || relay_chain_id == Some("dev-service".to_string());
+			if dev_service {
+				let collator = collator || cli.run.shared_params.dev;
+			}
 			runner.async_run(|config| {
 				let PartialComponents {
 					client,
 					task_manager,
 					import_queue,
 					..
-				} = crate::service::new_partial(&config)?;
+				} = crate::service::new_partial(&config, dev_service, collator, cli.run)?;
 				Ok((cmd.run(client, import_queue), task_manager))
 			})
 		}
 		Some(Subcommand::ExportBlocks(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
+			let dev_service =
+					cli.run.dev_service || relay_chain_id == Some("dev-service".to_string());
+			if dev_service {
+				let collator = collator || cli.run.shared_params.dev;
+			}
 			runner.async_run(|config| {
 				let PartialComponents {
 					client,
 					task_manager,
 					..
-				} = crate::service::new_partial(&config)?;
+				} = crate::service::new_partial(&config, dev_service, collator, cli.run)?;
 				Ok((cmd.run(client, config.database), task_manager))
 			})
 		}
 		Some(Subcommand::ExportState(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
+			let dev_service =
+					cli.run.dev_service || relay_chain_id == Some("dev-service".to_string());
+			if dev_service {
+				let collator = collator || cli.run.shared_params.dev;
+			}
 			runner.async_run(|config| {
 				let PartialComponents {
 					client,
 					task_manager,
 					..
-				} = crate::service::new_partial(&config)?;
+				} = crate::service::new_partial(&config, dev_service, collator, cli.run)?;
 				Ok((cmd.run(client, config.chain_spec), task_manager))
 			})
 		}
 		Some(Subcommand::ImportBlocks(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
+			let dev_service =
+					cli.run.dev_service || relay_chain_id == Some("dev-service".to_string());
+			if dev_service {
+				let collator = collator || cli.run.shared_params.dev;
+			}
 			runner.async_run(|config| {
 				let PartialComponents {
 					client,
 					task_manager,
 					import_queue,
 					..
-				} = crate::service::new_partial(&config)?;
+				} = crate::service::new_partial(&config, dev_service, collator, cli.run)?;
 				Ok((cmd.run(client, import_queue), task_manager))
 			})
 		}
@@ -200,13 +220,18 @@ pub fn run() -> Result<()> {
 		}
 		Some(Subcommand::Revert(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
+			let dev_service =
+					cli.run.dev_service || relay_chain_id == Some("dev-service".to_string());
+			if dev_service {
+				let collator = collator || cli.run.shared_params.dev;
+			}
 			runner.async_run(|config| {
 				let PartialComponents {
 					client,
 					task_manager,
 					backend,
 					..
-				} = crate::service::new_partial(&config)?;
+				} = crate::service::new_partial(&config, dev_service, collator, cli.run)?;
 				Ok((cmd.run(client, backend), task_manager))
 			})
 		}
