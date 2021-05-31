@@ -133,67 +133,63 @@ pub fn run() -> Result<()> {
 		}
 		Some(Subcommand::CheckBlock(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			let dev_service =
-					cli.run.dev_service || relay_chain_id == Some("dev-service".to_string());
-			if dev_service {
-				let collator = collator || cli.run.shared_params.dev;
-			}
 			runner.async_run(|config| {
+				let extension = banksy_chain_spec::Extensions::try_get(&*config.chain_spec);
+				let relay_chain_id = extension.map(|e| e.relay_chain.clone());
+				let dev_service =
+					cli.run.dev_service || relay_chain_id == Some("dev-service".to_string());
 				let PartialComponents {
 					client,
 					task_manager,
 					import_queue,
 					..
-				} = crate::service::new_partial(&config, dev_service, collator, cli.run)?;
+				} = crate::service::new_partial(&config, dev_service)?;
 				Ok((cmd.run(client, import_queue), task_manager))
 			})
 		}
 		Some(Subcommand::ExportBlocks(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			let dev_service =
-					cli.run.dev_service || relay_chain_id == Some("dev-service".to_string());
-			if dev_service {
-				let collator = collator || cli.run.shared_params.dev;
-			}
 			runner.async_run(|config| {
+				let extension = banksy_chain_spec::Extensions::try_get(&*config.chain_spec);
+				let relay_chain_id = extension.map(|e| e.relay_chain.clone());
+				let dev_service =
+					cli.run.dev_service || relay_chain_id == Some("dev-service".to_string());
 				let PartialComponents {
 					client,
 					task_manager,
 					..
-				} = crate::service::new_partial(&config, dev_service, collator, cli.run)?;
+				} = crate::service::new_partial(&config, dev_service)?;
 				Ok((cmd.run(client, config.database), task_manager))
 			})
 		}
 		Some(Subcommand::ExportState(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			let dev_service =
-					cli.run.dev_service || relay_chain_id == Some("dev-service".to_string());
-			if dev_service {
-				let collator = collator || cli.run.shared_params.dev;
-			}
 			runner.async_run(|config| {
+				let extension = banksy_chain_spec::Extensions::try_get(&*config.chain_spec);
+				let relay_chain_id = extension.map(|e| e.relay_chain.clone());
+				let dev_service =
+					cli.run.dev_service || relay_chain_id == Some("dev-service".to_string());
 				let PartialComponents {
 					client,
 					task_manager,
 					..
-				} = crate::service::new_partial(&config, dev_service, collator, cli.run)?;
+				} = crate::service::new_partial(&config, dev_service)?;
 				Ok((cmd.run(client, config.chain_spec), task_manager))
 			})
 		}
 		Some(Subcommand::ImportBlocks(cmd)) => {
 			let runner = cli.create_runner(cmd)?;
-			let dev_service =
-					cli.run.dev_service || relay_chain_id == Some("dev-service".to_string());
-			if dev_service {
-				let collator = collator || cli.run.shared_params.dev;
-			}
 			runner.async_run(|config| {
+				let extension = banksy_chain_spec::Extensions::try_get(&*config.chain_spec);
+				let relay_chain_id = extension.map(|e| e.relay_chain.clone());
+				let dev_service =
+					cli.run.dev_service || relay_chain_id == Some("dev-service".to_string());
 				let PartialComponents {
 					client,
 					task_manager,
 					import_queue,
 					..
-				} = crate::service::new_partial(&config, dev_service, collator, cli.run)?;
+				} = crate::service::new_partial(&config, dev_service)?;
 				Ok((cmd.run(client, import_queue), task_manager))
 			})
 		}
@@ -219,19 +215,18 @@ pub fn run() -> Result<()> {
 			})
 		}
 		Some(Subcommand::Revert(cmd)) => {
-			let runner = cli.create_runner(cmd)?;
-			let dev_service =
-					cli.run.dev_service || relay_chain_id == Some("dev-service".to_string());
-			if dev_service {
-				let collator = collator || cli.run.shared_params.dev;
-			}
+			let runner = cli.create_runner(cmd)?;		
 			runner.async_run(|config| {
+				let extension = banksy_chain_spec::Extensions::try_get(&*config.chain_spec);
+				let relay_chain_id = extension.map(|e| e.relay_chain.clone());
+				let dev_service =
+					cli.run.dev_service || relay_chain_id == Some("dev-service".to_string());	
 				let PartialComponents {
 					client,
 					task_manager,
 					backend,
 					..
-				} = crate::service::new_partial(&config, dev_service, collator, cli.run)?;
+				} = crate::service::new_partial(&config, dev_service)?;
 				Ok((cmd.run(client, backend), task_manager))
 			})
 		}
@@ -282,14 +277,25 @@ pub fn run() -> Result<()> {
 		}
 		None => {
 			let runner = cli.create_runner(&*cli.run)?;
+			let collator = cli.run.base.validator || cli.collator;			
 
 			runner.run_node_until_exit(|config| async move {
 				// TODO
 				let key = sp_core::Pair::generate().0;
 
+				let extension = banksy_chain_spec::Extensions::try_get(&*config.chain_spec);
+				let relay_chain_id = extension.map(|e| e.relay_chain.clone());
+				let dev_service =
+						cli.run.dev_service || relay_chain_id == Some("dev-service".to_string());
+				
 				let para_id =
 					banksy_chain_spec::Extensions::try_get(&*config.chain_spec).map(|e| e.para_id);
 
+				if dev_service {
+					// --dev implies --collator
+					let collator = collator || cli.run.shared_params.dev;
+					return crate::service::new_dev(&config, collator, cli.run);				
+				}
 				let polkadot_cli = RelayChainCli::new(
 					&config,
 					[RelayChainCli::executable_name().to_string()]

@@ -12,7 +12,7 @@ use rococo_parachain_primitives::Block;
 use sc_executor::native_executor_instance;
 pub use sc_executor::NativeExecutor;
 use sc_service::{Configuration, PartialComponents, Role, TFullBackend, TFullClient, TaskManager,
-	BasePath,
+	BasePath, error::Error as ServiceError
 };
 use sc_consensus_manual_seal::{ManualSealParams, EngineCommand, run_manual_seal};
 use fc_rpc_core::types::PendingTransactions;
@@ -65,9 +65,7 @@ pub fn open_frontier_backend(config: &Configuration) -> Result<Arc<fc_db::Backen
 /// be able to perform chain operations.
 pub fn new_partial(
 	config: &Configuration,
-	dev_service: bool
-	collator: bool,
-	cmd: RunCmd,
+	dev_service: bool,
 ) -> Result<
 	PartialComponents<
 		TFullClient<Block, RuntimeApi, Executor>,
@@ -143,9 +141,53 @@ pub fn new_partial(
 		task_manager,
 		transaction_pool,
 		inherent_data_providers,
-		select_chain: (),
+		select_chain: maybe_select_chain,
 		other: (telemetry, telemetry_worker_handle, pending_transactions, frontier_backend),
-	};
+	};	
+
+	Ok(params)
+}
+
+pub fn new_dev(
+	config: &Configuration,
+	collator: bool,
+	cmd: RunCmd,
+) -> Result<TaskManager, ServiceError> {
+	let sc_service::PartialComponents {
+		backend,
+		client,
+		import_queue,
+		keystore_container,
+		task_manager,
+		transaction_pool,
+		inherent_data_providers,
+		select_chain: maybe_select_chain,
+		other: (
+			telemetry, 
+			telemetry_worker_handle, 
+			pending_transactions, 
+			frontier_backend),
+	} = new_partial(&config, true)?;
+
+	let (network, network_status_sinks, system_rpc_tx, network_starter) =
+		sc_service::build_network(sc_service::BuildNetworkParams {
+			config: &config,
+			client: client.clone(),
+			transaction_pool: transaction_pool.clone(),
+			spawn_handle: task_manager.spawn_handle(),
+			import_queue,
+			on_demand: None,
+			block_announce_validator_builder: None,
+		})?;
+
+	if config.offchain_worker.enabled {
+		sc_service::build_offchain_workers(
+			&config,
+			task_manager.spawn_handle(),
+			client.clone(),
+			network.clone(),
+		);
+	}
 
 	let prometheus_registry = config.prometheus_registry().cloned();
 	let mut command_sink = None;
@@ -211,9 +253,8 @@ pub fn new_partial(
 			}),
 		);
 	}
-	
-
-	Ok(params)
+	network_starter.start_network();
+	Ok(task_manager)
 }
 
 /// Start a node with the given parachain `Configuration` and relay chain `Configuration`.
@@ -241,7 +282,7 @@ where
 
 	let parachain_config = prepare_node_config(parachain_config);
 
-	let params = new_partial(&parachain_config)?;
+	let params = new_partial(&parachain_config, false)?;
 	params
 		.inherent_data_providers
 		.register_provider(sp_timestamp::InherentDataProvider)

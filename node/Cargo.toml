@@ -64,7 +64,7 @@ fc-db = { git = "https://github.com/purestake/frontier", branch = "rococo-v1" }
 pallet-ethereum = { git = "https://github.com/purestake/frontier", branch = "rococo-v1" }
 pallet-transaction-payment-rpc = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
 substrate-frame-rpc-system = { git = "https://github.com/paritytech/substrate", branch = "rococo-v1" }
-fc-consensus = { git = "https://github.com/purestake/frontier", branch = "notlesh-moonbeam-v0.7" }
+fc-consensus = { git = "https://github.com/purestake/frontier", branch = "rococo-v1" }
 
 # RPC related dependencies
 jsonrpc-core = "15.1.0"
