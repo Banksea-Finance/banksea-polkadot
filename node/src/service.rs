@@ -70,7 +70,7 @@ pub fn new_partial(
 	PartialComponents<
 		TFullClient<Block, RuntimeApi, Executor>,
 		TFullBackend<Block>,
-		(),
+		Option<sc_consensus::LongestChain<TFullBackend<Block>, Block>>,
 		sp_consensus::import_queue::BasicQueue<Block, PrefixedMemoryDB<BlakeTwo256>>,
 		sc_transaction_pool::FullPool<Block, TFullClient<Block, RuntimeApi, Executor>>,
 		(Option<Telemetry>, Option<TelemetryWorkerHandle>, PendingTransactions, Arc<fc_db::Backend<Block>>,),
