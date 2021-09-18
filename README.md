@@ -1,6 +1,6 @@
-# Banksy Network
+# Banksea Network
 
-### Build the Banksy Node
+### Build the Banksea Node
 
 ```shell
 cargo build --release
